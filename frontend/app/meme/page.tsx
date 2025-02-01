@@ -76,7 +76,7 @@ export default function MemeGenerator() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center text-purple-700">
-            MindMate Meme Therapy
+            Claude9 Meme Therapy
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col items-center">

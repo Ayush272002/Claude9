@@ -15,7 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Brain } from "lucide-react";
+import { Cloud } from "lucide-react";
 import axios from "axios";
 
 import config from "@/config.json";
@@ -64,72 +64,83 @@ export default function SignIn() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-100 to-blue-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <div className="flex items-center justify-center mb-4">
-            <Brain className="h-12 w-12 text-purple-500" />
+    <div className="flex justify-between p-32 min-h-screen bg-gradient-to-b from-purple-100 to-blue-100">
+      <Link href="/" className="w-3/5 text-2xl font-bold text-purple-600 flex gap-2 items-center p-8">
+        <div>
+          <div className="text-4xl flex gap-2 items-center">
+            <Cloud className="h-16 w-16 text-purple-600" />
+            Claude9
           </div>
-          <CardTitle className="text-2xl font-bold text-center">
-            Sign in to MindMate AI
-          </CardTitle>
-          <CardDescription className="text-center">
-            Enter your email and password to access your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              {error && (
-                <Alert variant="destructive">
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-              <Button type="submit" className="w-full">
-                Sign In
-              </Button>
+          <div className="text-2xl">Welcome back, I'm excited to see you again!</div>
+        </div>
+      </Link>
+      <div className="bg-gradient-to-b from-purple-100 to-blue-100 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="space-y-1">
+            <div className="flex items-center justify-center mb-4">
+              <Cloud className="h-12 w-12 text-purple-500" />
             </div>
-          </form>
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
-          <div className="text-sm text-center">
-            <Link
-              href="/forgot-password"
-              className="text-purple-600 hover:underline"
-            >
-              Forgot your password?
-            </Link>
-          </div>
-          <div className="text-sm text-center">
-            Don't have an account?{" "}
-            <Link href="/signup" className="text-purple-600 hover:underline">
-              Sign up
-            </Link>
-          </div>
-        </CardFooter>
-      </Card>
+            <CardTitle className="text-2xl font-bold text-center">
+              Sign in to Claude9
+            </CardTitle>
+            <CardDescription className="text-center">
+              Enter your email and password to access your account
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+                <Button type="submit" className="w-full">
+                  Sign In
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-4">
+            <div className="text-sm text-center">
+              <Link
+                href="/forgot-password"
+                className="text-purple-600 hover:underline"
+              >
+                Forgot your password?
+              </Link>
+            </div>
+            <div className="text-sm text-center">
+              Don't have an account?{" "}
+              <Link href="/signup" className="text-purple-600 hover:underline">
+                Sign up
+              </Link>
+            </div>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 }

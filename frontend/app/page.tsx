@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Brain, Smile, Sparkles, Music, Zap } from "lucide-react";
+import { ArrowRight, Brain, Smile, Sparkles, Music, Zap, Cloud } from "lucide-react";
 import type React from "react";
 import { useRouter } from "next/navigation";
 
@@ -14,8 +14,9 @@ export default function Page() {
     <div className="min-h-screen bg-gradient-to-b from-purple-100 to-blue-100">
       <header className="container mx-auto px-4 py-8">
         <nav className="flex justify-between items-center">
-          <div className="text-2xl font-bold text-purple-600 cursor-pointer">
-            MindMate AI
+          <div className="text-2xl font-bold text-purple-600 cursor-pointer flex gap-2 items-center">
+            <Cloud className="h-8 w-8 text-purple-600" />
+            <div>Claude9</div>
           </div>
           <div className="space-x-4">
             <Link
@@ -118,7 +119,7 @@ export default function Page() {
           </h2>
           <p className="text-xl mb-8 text-gray-600">
             Join thousands of users who are taking control of their mental
-            well-being with MindMate AI.
+            well-being with Claude9 AI.
           </p>
           <Button size="lg" className="text-lg">
             Get Started for Free
@@ -129,7 +130,7 @@ export default function Page() {
 
       <footer className="bg-gray-100 py-8">
         <div className="container mx-auto px-4 text-center text-gray-600">
-          <p>&copy; 2025 MindMate AI. All rights reserved.</p>
+          <p>&copy; 2025 Claude9. All rights reserved.</p>
           <div className="mt-4">
             <Link href="#" className="text-gray-600 hover:text-purple-600 mx-2">
               Privacy Policy
