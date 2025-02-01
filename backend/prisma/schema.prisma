@@ -15,13 +15,49 @@ datasource db {
 
 // Enum for Emotion
 enum Emotion {
-  HAPPY
-  SAD
+  // Red (High Energy, Unpleasant)
+  ENRAGED
+  PANICKED
+  STRESSED
+  FRUSTRATED
   ANGRY
-  NEUTRAL
-  EXCITED
-  CALM
   ANXIOUS
+  WORRIED
+  IRRITATED
+  ANNOYED
+  DISGUSTED
+
+  // Blue (Low Energy, Unpleasant)
+  DISAPPOINTED
+  SAD
+  LONELY
+  HOPELESS
+  EXHAUSTED
+  DEPRESSED
+  BORED
+  DRAINED
+
+  // Yellow (High Energy, Pleasant)
+  SURPRISED
+  UPBEAT
+  FESTIVE
+  EXCITED
+  OPTIMISTIC
+  HAPPY
+  JOYFUL
+  HOPEFUL
+  BLISSFUL
+
+  // Green (Low Energy, Pleasant)
+  AT_EASE
+  CONTENT
+  LOVING
+  GRATEFUL
+  CALM
+  RELAXED
+  RESTFUL
+  PEACEFUL
+  SERENE
 }
 
 // User model

@@ -9,9 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@prisma/client": "^6.3.0",
     "@radix-ui/react-label": "^2.1.1",
     "@radix-ui/react-slot": "^1.1.1",
     "@radix-ui/react-toast": "^1.2.5",
+    "@radix-ui/react-tooltip": "^1.1.7",
     "axios": "^1.7.9",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
