@@ -38,6 +38,10 @@ router.post("/thoughts", async (req: Request, res: Response) => {
     {"role": "user", "content": emotion}
   ]
 
+  if (messages.length > 6) {
+    messages = [...messages, { "role": "user", "content": "Conclude the conversation with some closing advice." }]
+  }
+
   const anthropic = new Anthropic();
 
   let anthropicRes = (await anthropic.messages.create({
