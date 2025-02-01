@@ -1,5 +1,4 @@
 import { Request, Response, Router } from "express";
-import authMiddleware from "../middleware/authMiddleware";
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
