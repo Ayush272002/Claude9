@@ -12,6 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Search, ArrowLeft, ArrowRight, ChevronRight } from 'lucide-react'
+import { emotions as emotionsData } from '../utils/emotions'
 
 // Define the shape of emotion objects
 type Emotion = {
@@ -45,25 +46,10 @@ export default function Flow() {
   const [searchQuery, setSearchQuery] = useState('')
   const [hoveredEmotion, setHoveredEmotion] = useState<string | null>(null)
 
-  // Fetch emotions when component mounts
+  // Set emotions when component mounts
   useEffect(() => {
-    const fetchEmotions = async () => {
-      try {
-        const response = await fetch('/api/emotions')
-        if (!response.ok) {
-          throw new Error('Failed to fetch emotions')
-        }
-        const data = await response.json()
-        setEmotions(data)
-      } catch (err) {
-        console.error('Error fetching emotions:', err)
-        setError(err instanceof Error ? err.message : 'Failed to load emotions')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchEmotions()
+    setEmotions(emotionsData)
+    setLoading(false)
   }, [])
 
   // Helper functions for emotion filtering and display
