@@ -77,7 +77,6 @@ model CheckIn {
   checkin_id        Int      @id @default(autoincrement())
   user_id           Int
   time              DateTime @unique
-  weather           String?
   played_sport      Boolean  @default(false)
   met_friends       Boolean  @default(false)
   slept_well        Boolean  @default(false)
