@@ -19,7 +19,9 @@ import { Brain } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+import config from "@/config.json";
+
+const API_BASE_URL = config.apiBaseUrl;
 
 export default function SignUp() {
   const [name, setName] = useState("");
