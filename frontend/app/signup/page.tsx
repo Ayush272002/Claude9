@@ -48,7 +48,6 @@ export default function SignUp() {
 
     try {
       const response = await axios.post(`${API_BASE_URL}/api/register`, {
-        name,
         email,
         password,
       });
