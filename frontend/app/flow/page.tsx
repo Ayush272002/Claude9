@@ -5,13 +5,15 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Search, ArrowLeft, ArrowRight, ChevronRight } from 'lucide-react'
+import { Search, ArrowLeft, ArrowRight, ChevronRight, ChevronLeft } from 'lucide-react'
 import { emotions as emotionsData } from '../utils/emotions'
 
 // Define the shape of emotion objects
@@ -22,6 +24,12 @@ type Emotion = {
     energy: 'high' | 'low'
     pleasant: boolean
   }
+}
+
+type LifestyleQuestion = {
+  id: string
+  text: string
+  checked: boolean
 }
 
 const formatEmotionName = (str: string): string => {
@@ -45,6 +53,15 @@ export default function Flow() {
   const [selectedEmotion, setSelectedEmotion] = useState<Emotion | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [hoveredEmotion, setHoveredEmotion] = useState<string | null>(null)
+  const [step, setStep] = useState<'emotion' | 'reason' | 'lifestyle' | 'analysis' | 'insights' | 'actions'>('emotion')
+  const [reasonText, setReasonText] = useState('')  // user's reason for the selected emotion
+  const MIN_CHARS = 20  // Minimum characters required
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false)
+  const [lifestyleAnswers, setLifestyleAnswers] = useState<LifestyleQuestion[]>([
+    { id: 'exercise', text: 'Did you exercise or play sports today?', checked: false },
+    { id: 'friends', text: 'Did you meet friends today?', checked: false },
+    { id: 'sleep', text: 'Did you sleep well?', checked: false },
+  ])
 
   // Set emotions when component mounts
   useEffect(() => {
@@ -100,6 +117,57 @@ export default function Flow() {
         : ''
 
     return `${baseStyles} ${colorStyles} ${matchStyles} ${hoverStyles}`
+  }
+
+  // Handle continue button click
+  const handleContinue = () => {
+    if (step === 'emotion' && selectedEmotion) {
+      setStep('reason')
+    } else if (step === 'reason' && reasonText.length >= MIN_CHARS) {
+      setStep('lifestyle')
+    } else if (step === 'lifestyle') {
+      setStep('analysis')
+    } else if (step === 'analysis') {
+      setStep('insights')
+    } else if (step === 'insights') {
+      setStep('actions')
+    } else if (step === 'actions') {
+      // TODO: Handle final submission
+      console.log('Final submission:', {
+        emotion: selectedEmotion,
+        reason: reasonText,
+        lifestyle: lifestyleAnswers
+      })
+    } else if (step === 'reason') {
+      setHasAttemptedSubmit(true)
+    }
+  }
+
+  // Handle back button click
+  const handleBack = () => {
+    if (step === 'reason') {
+      setStep('emotion')
+    } else if (step === 'lifestyle') {
+      setStep('reason')
+    } else if (step === 'analysis') {
+      setStep('lifestyle')
+    } else if (step === 'insights') {
+      setStep('analysis')
+    } else if (step === 'actions') {
+      setStep('insights')
+    }
+  }
+
+  const handleUnsure = () => {
+    // use claude to ask prompt on new flow
+    // temporarily set reason text to "I am not sure"
+    setReasonText('I am not sure')
+  }
+
+  const handleDisabledClick = () => {
+    if (reasonText.length < MIN_CHARS) {
+      setHasAttemptedSubmit(true)
+    }
   }
 
   // Loading state
@@ -164,141 +232,377 @@ export default function Flow() {
       {/* Navigation Header */}
       <div className="container mx-auto py-3 px-4">
         <div className="flex justify-between items-center mb-3">
-          <Button variant="ghost" size="icon" className="hover:bg-white/20 rounded-xl">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="hover:bg-white/20 rounded-xl"
+            onClick={handleBack}
+            disabled={step === 'emotion'}
+          >
             <ArrowLeft className="h-5 w-5 text-gray-600" />
           </Button>
-          <div className="relative flex-1 max-w-xs mx-4">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
-            <Input
-              type="text"
-              placeholder="Search emotions..."
-              className="pl-10 pr-4 py-1.5 rounded-2xl bg-white/50 border-none focus-visible:ring-2 focus-visible:ring-purple-500/50 text-gray-700 text-sm"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <Button variant="ghost" size="icon" className="hover:bg-white/20 rounded-xl">
+          {step === 'emotion' && (
+            <div className="relative flex-1 max-w-xs mx-4">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
+              <Input
+                type="text"
+                placeholder="Search emotions..."
+                className="pl-10 pr-4 py-1.5 rounded-2xl bg-white/50 border-none focus-visible:ring-2 focus-visible:ring-purple-500/50 text-gray-700 text-sm"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          )}
+          <Button variant="ghost" size="icon" className="hover:bg-white/20 rounded-xl invisible">
             <ArrowRight className="h-5 w-5 text-gray-600" />
           </Button>
         </div>
       </div>
 
-      {/* Main content area with grid and selection */}
+      {/* Main content area */}
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-center gap-8">
-          {/* Emotion Grid */}
-          <div className="relative w-full max-w-3xl aspect-square p-12 rounded-3xl border border-white/20 overflow-hidden bg-white/40 backdrop-blur-sm">
-            {/* quadrant labels */}
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 
-                  text-sm uppercase tracking-wider font-medium 
-                  text-gray-600 whitespace-nowrap">
-                High Energy
+        {step === 'emotion' ? (
+          <div className="flex items-center justify-center gap-8">
+            {/* Emotion Grid */}
+            <div className="relative w-full max-w-3xl aspect-square p-12 rounded-3xl border border-white/20 overflow-hidden bg-white/40 backdrop-blur-sm">
+              {/* quadrant labels */}
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 
+                    text-sm uppercase tracking-wider font-medium 
+                    text-gray-600 whitespace-nowrap">
+                  High Energy
+                </div>
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 
+                    text-sm uppercase tracking-wider font-medium 
+                    text-gray-600 whitespace-nowrap">
+                  Low Energy
+                </div>
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 
+                    text-sm uppercase tracking-wider font-medium 
+                    text-gray-600 whitespace-nowrap">
+                  Unpleasant
+                </div>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 rotate-90 
+                    text-sm uppercase tracking-wider font-medium 
+                    text-gray-600 whitespace-nowrap">
+                  Pleasant
+                </div>
               </div>
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 
-                  text-sm uppercase tracking-wider font-medium 
-                  text-gray-600 whitespace-nowrap">
-                Low Energy
-              </div>
-              <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 
-                  text-sm uppercase tracking-wider font-medium 
-                  text-gray-600 whitespace-nowrap">
-                Unpleasant
-              </div>
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 rotate-90 
-                  text-sm uppercase tracking-wider font-medium 
-                  text-gray-600 whitespace-nowrap">
-                Pleasant
-              </div>
+
+              {/* Emotion quadrants grid */}
+              <TooltipProvider>
+                <div className="grid grid-cols-2 h-full">
+                  {/* Top Left - High Energy, Unpleasant */}
+                  <div className="p-2">
+                    <div className="grid grid-cols-3 gap-3 h-full place-items-center">
+                      {getQuadrantEmotions('high', false).map((emotion, index) => (
+                        <EmotionButton
+                          key={index}
+                          emotion={emotion}
+                          energy="high"
+                          pleasant={false}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Top Right - High Energy, Pleasant */}
+                  <div className="p-2">
+                    <div className="grid grid-cols-3 gap-3 h-full place-items-center">
+                      {getQuadrantEmotions('high', true).map((emotion, index) => (
+                        <EmotionButton
+                          key={index}
+                          emotion={emotion}
+                          energy="high"
+                          pleasant={true}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Bottom Left - Low Energy, Unpleasant */}
+                  <div className="p-2">
+                    <div className="grid grid-cols-3 gap-3 h-full place-items-center">
+                      {getQuadrantEmotions('low', false).map((emotion, index) => (
+                        <EmotionButton
+                          key={index}
+                          emotion={emotion}
+                          energy="low"
+                          pleasant={false}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Bottom Right - Low Energy, Pleasant */}
+                  <div className="p-2">
+                    <div className="grid grid-cols-3 gap-3 h-full place-items-center">
+                      {getQuadrantEmotions('low', true).map((emotion, index) => (
+                        <EmotionButton
+                          key={index}
+                          emotion={emotion}
+                          energy="low"
+                          pleasant={true}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </TooltipProvider>
             </div>
 
-            {/* Emotion quadrants grid */}
-            <TooltipProvider>
-              <div className="grid grid-cols-2 h-full">
-                {/* Top Left - High Energy, Unpleasant */}
-                <div className="p-2">
-                  <div className="grid grid-cols-3 gap-3 h-full place-items-center">
-                    {getQuadrantEmotions('high', false).map((emotion, index) => (
-                      <EmotionButton
-                        key={index}
-                        emotion={emotion}
-                        energy="high"
-                        pleasant={false}
-                      />
-                    ))}
+            {/* Selection and Continue */}
+            <div className="flex flex-col items-center gap-6 min-w-[200px]">
+              {selectedEmotion ? (
+                <>
+                  <div className="flex items-center gap-4 bg-white/60 backdrop-blur-sm px-6 py-4 rounded-2xl">
+                    <span className="text-4xl">{selectedEmotion.value}</span>
+                    <span className="text-lg font-medium text-gray-700">
+                      {formatEmotionName(selectedEmotion.name)}
+                    </span>
+                  </div>
+                  <Button 
+                    size="lg" 
+                    className="rounded-xl bg-purple-500 hover:bg-purple-600 text-white gap-2"
+                    onClick={handleContinue}
+                  >
+                    Continue
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                </>
+              ) : (
+                <div className="text-gray-500 text-sm font-medium text-center max-w-44 mx-auto">
+                  Select the emoji that best describes how you feel right now
+                </div>
+              )}
+            </div>
+          </div>
+        ) : step === 'reason' ? (
+          <div className="max-w-2xl mx-auto">
+            <Card className="p-8 bg-white/80 backdrop-blur-sm">
+              <div className="flex flex-col items-center gap-6">
+                {/* Header section w/ emoji and question */}
+                <div className="flex items-center gap-4">
+                  <span className="text-4xl">{selectedEmotion?.value}</span>
+                  <h2 className="text-2xl font-medium text-gray-700">
+                    What made you feel {formatEmotionName(selectedEmotion?.name.toLowerCase() || '')}?
+                  </h2>
+                </div>
+
+                {/* Text input section */}
+                <div className="w-full">
+                  <div className="relative">
+                    <Input
+                      className={`w-full text-lg p-4 bg-white/50 border-none focus-visible:ring-2 focus-visible:ring-purple-500/50 ${
+                        hasAttemptedSubmit && reasonText.length < MIN_CHARS ? 'ring-2 ring-orange-500/50' : ''
+                      }`}
+                      placeholder="Share your thoughts..."
+                      value={reasonText}
+                      onChange={(e) => {
+                        // Remove hashtags from input for future database storage retrieval and parsing purposes
+                        const cleanText = e.target.value.split('#').join('');
+                        setReasonText(cleanText);
+                        
+                        if (cleanText.length >= MIN_CHARS) {
+                          setHasAttemptedSubmit(false)
+                        }
+                      }}
+                    />
+                    
+                    {/* Error message for min. char. requirement */}
+                    {hasAttemptedSubmit && reasonText.length < MIN_CHARS && (
+                      <p className="absolute -bottom-6 left-0 text-sm text-orange-600">
+                        Please write at least {MIN_CHARS} characters ({MIN_CHARS - reasonText.length} more needed)
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                {/* Top Right - High Energy, Pleasant */}
-                <div className="p-2">
-                  <div className="grid grid-cols-3 gap-3 h-full place-items-center">
-                    {getQuadrantEmotions('high', true).map((emotion, index) => (
-                      <EmotionButton
-                        key={index}
-                        emotion={emotion}
-                        energy="high"
-                        pleasant={true}
-                      />
-                    ))}
-                  </div>
-                </div>
+                {/* Navigation buttons */}
+                <div className="flex gap-4">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="rounded-xl gap-2"
+                    onClick={handleUnsure}
+                  >
+                    I'm not sure
+                  </Button>
 
-                {/* Bottom Left - Low Energy, Unpleasant */}
-                <div className="p-2">
-                  <div className="grid grid-cols-3 gap-3 h-full place-items-center">
-                    {getQuadrantEmotions('low', false).map((emotion, index) => (
-                      <EmotionButton
-                        key={index}
-                        emotion={emotion}
-                        energy="low"
-                        pleasant={false}
-                      />
-                    ))}
-                  </div>
-                </div>
+                  <TooltipProvider>
+                    <Tooltip>
+                      {/* Wrapper for the continue button with tooltip  */}
+                      <TooltipTrigger asChild>
+                        <div 
+                          onClick={reasonText.length < MIN_CHARS ? handleDisabledClick : undefined}
+                          className={reasonText.length < MIN_CHARS ? 'cursor-not-allowed' : ''}
+                        >
+                          {/* Continue button that changes appearance based on text length  */}
+                          <Button 
+                            size="lg" 
+                            className={`rounded-xl gap-2 ${
+                              reasonText.length >= MIN_CHARS 
+                                ? 'bg-purple-500 hover:bg-purple-600' 
+                                : 'bg-purple-500/50'  // dimmed when disabled
+                            } text-white`}
+                            onClick={handleContinue}
+                            disabled={!reasonText.trim() || reasonText.length < MIN_CHARS}
+                          >
+                            Continue
+                            <ChevronRight className="h-5 w-5" />
+                          </Button>
+                        </div>
+                      </TooltipTrigger>
 
-                {/* Bottom Right - Low Energy, Pleasant */}
-                <div className="p-2">
-                  <div className="grid grid-cols-3 gap-3 h-full place-items-center">
-                    {getQuadrantEmotions('low', true).map((emotion, index) => (
-                      <EmotionButton
-                        key={index}
-                        emotion={emotion}
-                        energy="low"
-                        pleasant={true}
-                      />
-                    ))}
-                  </div>
+                      {/* Show tooltip only when text is too short  */}
+                      {(reasonText.trim() && reasonText.length < MIN_CHARS) && (
+                        <TooltipContent 
+                          side="top" 
+                          className="bg-white/90 border-none shadow-lg"
+                        >
+                          <p className="text-sm text-orange-600">
+                            Please write at least {MIN_CHARS} characters ({MIN_CHARS - reasonText.length} more needed)
+                          </p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
-            </TooltipProvider>
+            </Card>
           </div>
-
-          {/* Selection and Continue */}
-          <div className="flex flex-col items-center gap-6 min-w-[200px]">
-            {selectedEmotion ? (
-              <>
-                <div className="flex items-center gap-4 bg-white/60 backdrop-blur-sm px-6 py-4 rounded-2xl">
-                  <span className="text-4xl">{selectedEmotion.value}</span>
-                  <span className="text-lg font-medium text-gray-700">
-                    {formatEmotionName(selectedEmotion.name)}
-                  </span>
+        ) : step === 'lifestyle' ? (
+          <div className="max-w-2xl mx-auto">
+            <Card className="p-8 bg-white/80 backdrop-blur-sm">
+              <div className="flex flex-col items-center gap-8">
+                <h2 className="text-3xl font-bold text-gray-700">
+                  How's life?
+                </h2>
+                
+                <div className="w-full space-y-8">
+                  {/* Map through lifestyle questions and render switches  */}
+                  {lifestyleAnswers.map((question) => (
+                    <div key={question.id} className="flex items-center justify-between bg-white/50 p-6 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">
+                          {question.id === 'exercise' ? '🏃‍♂️' : 
+                           question.id === 'friends' ? '👥' : 
+                           question.id === 'sleep' ? '😴' : ''}
+                        </span>
+                        <Label 
+                          htmlFor={question.id} 
+                          className="text-xl font-medium text-gray-700 cursor-pointer"
+                        >
+                          {question.text}
+                        </Label>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium text-gray-500">
+                          {question.checked ? 'Yes' : 'No'}
+                        </span>
+                        <Switch
+                          id={question.id}
+                          checked={question.checked}
+                          onCheckedChange={(checked) => {
+                            setLifestyleAnswers(prev => prev.map(q => 
+                              q.id === question.id ? { ...q, checked } : q
+                            ))
+                          }}
+                          className="data-[state=checked]:bg-purple-500"
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
+
                 <Button 
                   size="lg" 
-                  className="rounded-xl bg-purple-500 hover:bg-purple-600 text-white gap-2"
+                  className="rounded-xl bg-purple-500 hover:bg-purple-600 text-white gap-2 mt-4"
+                  onClick={handleContinue}
                 >
                   Continue
                   <ChevronRight className="h-5 w-5" />
                 </Button>
-              </>
-            ) : (
-              <div className="text-gray-500 text-sm font-medium text-center max-w-44 mx-auto">
-                Select the emoji that best describes how you feel right now
               </div>
-            )}
+            </Card>
           </div>
-        </div>
+        ) : step === 'analysis' ? (
+          <div className="max-w-2xl mx-auto">
+            <Card className="p-8 bg-white/80 backdrop-blur-sm">
+              <div className="flex flex-col items-center gap-8">
+                <h2 className="text-3xl font-bold text-gray-700">
+                  Analysis
+                </h2>
+                
+                {/* Placeholder for meme image */}
+                <div className="w-full aspect-video bg-gray-200/50 rounded-xl flex items-center justify-center">
+                  <p className="text-gray-500 text-lg">Meme placeholder here</p>
+                </div>
+
+                <Button 
+                  size="lg" 
+                  className="rounded-xl bg-purple-500 hover:bg-purple-600 text-white gap-2"
+                  onClick={handleContinue}
+                >
+                  Continue
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
+              </div>
+            </Card>
+          </div>
+        ) : step === 'insights' ? (
+          <div className="max-w-2xl mx-auto">
+            <Card className="p-8 bg-white/80 backdrop-blur-sm">
+              <div className="flex flex-col items-center gap-8">
+                <h2 className="text-3xl font-bold text-gray-700">
+                  Insights
+                </h2>
+                
+                <div className="w-full p-6 bg-white/50 rounded-xl">
+                  <p className="text-gray-700 text-lg leading-relaxed">
+                    Here are some insights about your emotional state and daily activities...
+                    [Placeholder pt2]
+                  </p>
+                </div>
+
+                <Button 
+                  size="lg" 
+                  className="rounded-xl bg-purple-500 hover:bg-purple-600 text-white gap-2"
+                  onClick={handleContinue}
+                >
+                  Continue
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
+              </div>
+            </Card>
+          </div>
+        ) : (
+          <div className="max-w-2xl mx-auto">
+            <Card className="p-8 bg-white/80 backdrop-blur-sm">
+              <div className="flex flex-col items-center gap-8">
+                <h2 className="text-3xl font-bold text-gray-700">
+                  Your Actions
+                </h2>
+                
+                <div className="w-full p-6 bg-white/50 rounded-xl">
+                  <p className="text-gray-700 text-lg leading-relaxed">
+                    Based on your emotional state and activities, here are some recommended actions...
+                    [placeholder pt3]
+                  </p>
+                </div>
+
+                <Button 
+                  size="lg" 
+                  className="rounded-xl bg-purple-500 hover:bg-purple-600 text-white gap-2"
+                  onClick={handleContinue}
+                >
+                  Finish
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
+              </div>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   )
