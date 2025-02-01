@@ -1,0 +1,64 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enum for Emotion
+enum Emotion {
+  HAPPY
+  SAD
+  ANGRY
+  NEUTRAL
+  EXCITED
+  CALM
+  ANXIOUS
+}
+
+// User model
+model User {
+  user_id             Int        @id @default(autoincrement())
+  email               String     @unique
+  password            String
+  opt_out_of_memes    Boolean    @default(false)
+  utc_offset          Int
+  daily_reminder_freq Int        @default(1)
+  checkIns            CheckIn[]
+  reminders           Reminder[]
+}
+
+// CheckIn model
+model CheckIn {
+  checkin_id        Int      @id @default(autoincrement())
+  user_id           Int
+  time              DateTime @unique
+  weather           String?
+  played_sport      Boolean  @default(false)
+  met_friends       Boolean  @default(false)
+  slept_well        Boolean  @default(false)
+  init_mood         Emotion
+  overall_sentiment Emotion
+  thoughts          String
+  insights_actions  String
+  playlist          String?
+
+  user User @relation(fields: [user_id], references: [user_id])
+}
+
+// Reminder model
+model Reminder {
+  reminder_id Int    @id @default(autoincrement())
+  user_id     Int
+  message     String
+
+  user User @relation(fields: [user_id], references: [user_id])
+}
