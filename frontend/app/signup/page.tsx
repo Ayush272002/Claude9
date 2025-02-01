@@ -15,7 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Brain } from "lucide-react";
+import { Cloud } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 
@@ -61,7 +61,7 @@ export default function SignUp() {
         toast({
           title: "Account created!",
           description:
-            "Welcome to MindMate AI. Redirecting you to the onboarding process...",
+            "Welcome to Claude9. Redirecting you to the onboarding process...",
         });
 
         setTimeout(() => {
@@ -79,84 +79,95 @@ export default function SignUp() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-100 to-blue-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <div className="flex items-center justify-center mb-4">
-            <Brain className="h-12 w-12 text-purple-500" />
-          </div>
-          <CardTitle className="text-2xl font-bold text-center">
-            Create your MindMate AI account
-          </CardTitle>
-          <CardDescription className="text-center">
-            Enter your details to start your mental health journey
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  placeholder="John Doe"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-              </div>
-              {error && (
-                <Alert variant="destructive">
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-              <Button type="submit" className="w-full">
-                Sign Up
-              </Button>
+    <div className="flex justify-between p-32 min-h-screen bg-gradient-to-b from-purple-100 to-blue-100">
+      <Link href="/" className="w-3/5 text-2xl font-bold text-purple-600 flex gap-2 items-center p-8">
+        <div>
+          <div className="text-4xl flex gap-2 items-center">
+              <Cloud className="h-16 w-16 text-purple-600" />
+              Claude9
             </div>
-          </form>
-        </CardContent>
-        <CardFooter>
-          <div className="text-sm text-center w-full">
-            Already have an account?{" "}
-            <Link href="/login" className="text-purple-600 hover:underline">
-              Sign in
-            </Link>
-          </div>
-        </CardFooter>
-      </Card>
+          <div className="text-2xl">Understand your emotions, track your mental health, and get personalized support - all with the power of AI.</div>
+        </div>
+      </Link>
+      <div className="bg-gradient-to-b from-purple-100 to-blue-100 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="space-y-1">
+            <div className="flex items-center justify-center mb-4">
+              <Cloud className="h-12 w-12 text-purple-500" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-center">
+              Create your Claude9 account
+            </CardTitle>
+            <CardDescription className="text-center">
+              Enter your details to start your mental health journey
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input
+                    id="name"
+                    placeholder="John Doe"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+                <Button type="submit" className="w-full">
+                  Sign Up
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+          <CardFooter>
+            <div className="text-sm text-center w-full">
+              Already have an account?{" "}
+              <Link href="/login" className="text-purple-600 hover:underline">
+                Sign in
+              </Link>
+            </div>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 }
