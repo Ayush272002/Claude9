@@ -65,28 +65,19 @@ function getEmotionCategory(emotionName: string): { energy: 'high' | 'low'; plea
   return { energy: 'low', pleasant: true }
 }
 
-export async function GET() {
-  try {
-    // Combine all emotion categories
-    const EMOTION_VALUES: EmotionMap = {
-      ...HIGH_ENERGY_UNPLEASANT,
-      ...LOW_ENERGY_UNPLEASANT,
-      ...HIGH_ENERGY_PLEASANT,
-      ...LOW_ENERGY_PLEASANT,
-    }
-
-    const emotions = Object.keys(EMOTION_VALUES).map(name => ({
-      name,
-      value: EMOTION_VALUES[name],
-      category: getEmotionCategory(name)
-    }))
-
-    return NextResponse.json(emotions)
-  } catch (error) {
-    console.error('Error fetching emotions:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch emotions' },
-      { status: 500 }
-    )
+// Export the emotions data directly
+export const emotions = (() => {
+  // Combine all emotion categories
+  const EMOTION_VALUES: EmotionMap = {
+    ...HIGH_ENERGY_UNPLEASANT,
+    ...LOW_ENERGY_UNPLEASANT,
+    ...HIGH_ENERGY_PLEASANT,
+    ...LOW_ENERGY_PLEASANT,
   }
-} 
+
+  return Object.keys(EMOTION_VALUES).map(name => ({
+    name,
+    value: EMOTION_VALUES[name],
+    category: getEmotionCategory(name)
+  }))
+})() 
