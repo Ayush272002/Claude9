@@ -18,7 +18,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Brain } from "lucide-react";
 import axios from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+import config from "@/config.json";
+
+const API_BASE_URL = config.apiBaseUrl;
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -28,22 +30,35 @@ export default function SignIn() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+
+    if (!email || !password) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
     try {
+      const payload = { email, password };
+
       const res = await axios.post(
-        `${API_BASE_URL}/api/login`,
-        { email, password },
-        { withCredentials: true } 
+        `${API_BASE_URL}/api/v1/auth/signin`,
+        payload
       );
 
-      if (res.status === 200) {
-        router.push("/dashboard");
-      }
-    } catch (err: any) {
-      if (err.response && err.response.data && err.response.data.error) {
-        setError(err.response.data.error || "Something went wrong.");
+      if (res.data.token) {
+        localStorage.setItem("token", res.data.token);
+        router.push("/dashboard"); 
       } else {
-        setError("An error occurred. Please try again.");
+        setError("Login failed. Please try again.");
+      }
+    } catch (error: any) {
+      if (error.response) {
+        setError(
+          error.response.data.message || "Login failed. Please try again."
+        );
+      } else if (error.request) {
+        setError("No response received from the server.");
+      } else {
+        setError("An error occurred during login.");
       }
     }
   };

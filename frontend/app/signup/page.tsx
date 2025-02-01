@@ -19,7 +19,9 @@ import { Brain } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+import config from "@/config.json";
+
+const API_BASE_URL = config.apiBaseUrl;
 
 export default function SignUp() {
   const [name, setName] = useState("");
@@ -32,7 +34,6 @@ export default function SignUp() {
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    console.log(API_BASE_URL);
     e.preventDefault();
     setError("");
 
@@ -47,13 +48,16 @@ export default function SignUp() {
     }
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/register`, {
+      const response = await axios.post(`${API_BASE_URL}/api/v1/auth/signup`, {
         name,
         email,
         password,
       });
 
       if (response.status === 201) {
+        const { token } = response.data; 
+        localStorage.setItem("token", token);
+
         toast({
           title: "Account created!",
           description:
@@ -61,7 +65,7 @@ export default function SignUp() {
         });
 
         setTimeout(() => {
-          router.push("/onboarding");
+          router.push("/dashboard");
         }, 2000);
       }
     } catch (err: any) {
