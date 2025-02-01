@@ -1,0 +1,17 @@
+export const topics = [
+  "My dog ate my homework right before the deadline.",
+  "When I tried to make dinner and the smoke detector started cheering.",
+  "My friend said they’d be on time, but they arrived just as the event ended.",
+  "That moment when you realize your coffee is just hot water with disappointment.",
+  "The awkward moment when your crush waves at you, and you wave back to the wrong person.",
+  "When you find out your favorite restaurant is closed for the day.",
+  "When you try to be productive, but your bed looks way too inviting.",
+  "My cat ignoring me until I open a can of tuna.",
+  "That time I got stuck in a Zoom call for 3 hours, but no one was talking.",
+  "When the Wi-Fi stops working, and suddenly everything is a crisis.",
+  "That awkward moment when you accidentally send a text to the wrong person.",
+  "When the teacher asks a question, and you’re just trying to look confident while you have no idea.",
+  "The struggle of getting out of bed when your blanket feels like a warm hug.",
+  "The moment I realized I had left my phone at home and was now unreachable for 5 hours.",
+  "When you try to make a joke but it’s crickets all around.",
+];
