@@ -185,6 +185,8 @@ export default function Flow() {
       try {
         setStep('analysis')
         setLoadingInsights(true);
+        const startTime = Date.now();
+        
         const res = await axios.post(
           `${API_BASE_URL}/api/v1/profile/checkin`,
           {
@@ -203,6 +205,15 @@ export default function Flow() {
             withCredentials: true
           }
         );
+        
+        // add a delay to simulate loading time
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, 100 - elapsedTime);
+        
+        if (remainingTime > 0) {
+          await new Promise(resolve => setTimeout(resolve, remainingTime));
+        }
+        
         setLoadingInsights(false);
         setInsights(res.data.checkIn.insights_actions);
         setMemeURL(res.data.meme);
@@ -834,21 +845,27 @@ export default function Flow() {
                 </h2>
                 
                 {/* Placeholder for meme image */}
-                {
-                  (memeURL != undefined)
-                  ? 
-                  <img src={memeURL} className="w-full aspect-video bg-gray-200/50 rounded-xl flex items-center justify-center">
-                  </img>
-                  :
-                  <div className="w-full aspect-video bg-gray-200/50 rounded-xl flex items-center justify-center">
-                    <p className="text-gray-500 text-lg">Loading...</p>
+                {loadingInsights ? (
+                  <div className="w-full">
+                    <Skeleton className="w-full aspect-video rounded-xl" />
                   </div>
-                }
+                ) : memeURL ? (
+                  <img 
+                    src={memeURL} 
+                    alt="Meme"
+                    className="w-full aspect-video object-contain bg-gray-200/50 rounded-xl"
+                  />
+                ) : (
+                  <div className="w-full aspect-video bg-gray-200/50 rounded-xl flex items-center justify-center">
+                    <p className="text-red-500">Failed to load meme. Please try again.</p>
+                  </div>
+                )}
 
                 <Button 
                   size="lg" 
                   className="rounded-xl bg-purple-500 hover:bg-purple-600 text-white gap-2"
                   onClick={handleContinue}
+                  disabled={loadingInsights}
                 >
                   Continue
                   <ChevronRight className="h-5 w-5" />
@@ -891,7 +908,7 @@ export default function Flow() {
                   className="rounded-xl bg-purple-500 hover:bg-purple-600 text-white gap-2"
                   onClick={handleContinue}
                 >
-                  Back to home
+                  Finish
                   <ChevronRight className="h-5 w-5" />
                 </Button>
               </div>
