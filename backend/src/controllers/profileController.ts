@@ -33,7 +33,8 @@ router.get("/", async (req: Request, res: Response) => {
 
 router.post("/thoughts", async (req: Request, res: Response) => {
   let { messages, emotion } = req.body;
-  console.log(messages)
+  console.log("messages: ");
+  console.log(messages);
 
   // Default message if no messages exist yet, initiate the conversation with the user's emotion
   if (!messages) {
@@ -93,7 +94,9 @@ router.post("/thoughts", async (req: Request, res: Response) => {
 router.post("/checkin", async (req: Request, res: Response) => {
   const { userId, played_sport, met_friends, slept_well, init_mood, thoughts } = req.body;
 
-  const anthropic = new Anthropic();
+  const anthropic = new Anthropic({
+    apiKey: process.env.CLAUDE_API_KEY
+  });
 
   let anthropicRes0 = (await anthropic.messages.create({
     model: "claude-3-5-sonnet-20241022",

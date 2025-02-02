@@ -182,34 +182,38 @@ export default function Flow() {
         setHasAttemptedSubmit(true)
       }
     } else if (step === 'lifestyle') {
-      setStep('analysis')
-      setLoadingInsights(true);
-      const res = await axios.post(
-        `${API_BASE_URL}/api/v1/profile/checkin`,
-        {
-          played_sport: lifestyleAnswers.find(q => q.id = 'exercise')?.checked,
-          met_friends: lifestyleAnswers.find(q => q.id = 'friends')?.checked,
-          slept_well: lifestyleAnswers.find(q => q.id = 'sleep')?.checked,
-          init_mood: selectedEmotion?.name,
-          thoughts: chatMessages.map(msg => `${msg.role}: ${msg.content}`).join("\n"),
-        },
-        {
-          headers: {
-            Authorization: "Bearer " + localStorage.getItem("token")
+      try {
+        setStep('analysis')
+        setLoadingInsights(true);
+        const res = await axios.post(
+          `${API_BASE_URL}/api/v1/profile/checkin`,
+          {
+            played_sport: lifestyleAnswers.find(q => q.id === 'exercise')?.checked,
+            met_friends: lifestyleAnswers.find(q => q.id === 'friends')?.checked,
+            slept_well: lifestyleAnswers.find(q => q.id === 'sleep')?.checked,
+            init_mood: selectedEmotion?.name,
+            thoughts: chatMessages.map(msg => `${msg.role}: ${msg.content}`).join("\n"),
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("token")}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            withCredentials: true
           }
-        }
-      );
-      setLoadingInsights(false);
-      setInsights(res.data.checkIn.insights_actions);
-      setMemeURL(res.data.meme);
+        );
+        setLoadingInsights(false);
+        setInsights(res.data.checkIn.insights_actions);
+        setMemeURL(res.data.meme);
+      } catch (error) {
+        console.error('Error during checkin:', error);
+        setLoadingInsights(false);
+        setError('Failed to submit check-in. Please try again.');
+      }
     } else if (step === 'analysis') {
       setStep('insights')
     } else if (step === 'insights') {
-      console.log('Final submission:', {
-        emotion: selectedEmotion,
-        reason: reasonText,
-        lifestyle: lifestyleAnswers
-      })
       router.push("/dashboard");
     }
   }
@@ -294,8 +298,14 @@ export default function Flow() {
     if (!isResend && !currentInput.trim()) return;
     if (!isResend && currentInput.length < MIN_CHAT_CHARS) return;
 
+    // If it's a resend and we don't have enough messages, return
+    if (isResend && chatMessages.length < 2) {
+      console.error('Not enough messages to resend');
+      return;
+    }
+
     // If it's a resend, use the last user message
-    const messageToSend = isResend 
+    const messageToSend = isResend && chatMessages.length >= 2
       ? chatMessages[chatMessages.length - 2].content // Get the last user message
       : currentInput;
 
@@ -325,12 +335,12 @@ export default function Flow() {
       if (error) {
         console.error('Error getting response:', error);
         setChatMessages([...updatedMessages, { 
-          role: 'assistant' as const, 
+          role: 'assistant', 
           content: `Error: ${error}. Click to retry.` 
         }]);
       } else if (data) {
         const lastMessage = data.messages[data.messages.length - 1];
-        setChatMessages([...updatedMessages, { role: 'assistant' as const, content: lastMessage.content }]);
+        setChatMessages([...updatedMessages, { role: 'assistant', content: lastMessage.content }]);
       }
 
       setIsThinking(false);
