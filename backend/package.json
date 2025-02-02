@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "tsc --build --verbose tsconfig.build.json",
+    "build": "tsc -b",
     "lint": "eslint . --max-warnings 0",
     "dev": "tsc-watch --onSuccess 'npm run start' -p ./tsconfig.json",
     "start": "node ./dist/index.js"
