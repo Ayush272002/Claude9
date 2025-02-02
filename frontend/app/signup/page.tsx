@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Card,
   CardContent,
@@ -16,7 +17,6 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Cloud } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
 
 import config from "@/config.json";
@@ -24,69 +24,118 @@ import config from "@/config.json";
 const API_BASE_URL = config.apiBaseUrl;
 
 export default function SignUp() {
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const { toast } = useToast();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      router.push('/dashboard');
+    } else {
+      setIsLoading(false);
+    }
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+
+    if (!email || !password || !confirmPassword) {
+      setError("Please fill in all fields.");
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Passwords do not match. Please try again.",
-      });
       return;
     }
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/v1/auth/signup`, {
-        name,
-        email,
-        password,
-      });
+      const payload = { email, password };
 
-      if (response.status === 201) {
-        const { token } = response.data; 
-        localStorage.setItem("token", token);
+      const res = await axios.post(
+        `${API_BASE_URL}/api/v1/auth/signup`,
+        payload
+      );
 
-        toast({
-          title: "Account created!",
-          description:
-            "Welcome to Claude9. Redirecting you to the onboarding process...",
-        });
-
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 2000);
+      if (res.data.token) {
+        localStorage.setItem("token", res.data.token);
+        router.push("/dashboard");
+      } else {
+        setError("Sign up failed. Please try again.");
       }
-    } catch (err: any) {
-      setError("An error occurred during sign-up. Please try again.");
-      toast({
-        variant: "destructive",
-        title: "Sign-up failed",
-        description: "An error occurred during sign-up. Please try again.",
-      });
+    } catch (error: any) {
+      if (error.response) {
+        setError(
+          error.response.data.message || "Sign up failed. Please try again."
+        );
+      } else if (error.request) {
+        setError("No response received from the server.");
+      } else {
+        setError("An error occurred during sign up.");
+      }
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-between p-32 min-h-screen bg-gradient-to-b from-purple-100 to-blue-100">
+        <div className="w-3/5 p-8">
+          <div>
+            <div className="flex gap-2 items-center mb-4">
+              <Skeleton className="h-16 w-16 rounded-full" />
+              <Skeleton className="h-12 w-32" />
+            </div>
+            <Skeleton className="h-8 w-96" />
+          </div>
+        </div>
+        <div className="flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="space-y-1">
+              <div className="flex items-center justify-center mb-4">
+                <Skeleton className="h-12 w-12 rounded-full" />
+              </div>
+              <Skeleton className="h-8 w-48 mx-auto" />
+              <Skeleton className="h-4 w-64 mx-auto" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col space-y-4">
+              <Skeleton className="h-4 w-48 mx-auto" />
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex justify-between p-32 min-h-screen bg-gradient-to-b from-purple-100 to-blue-100">
       <Link href="/" className="w-3/5 text-2xl font-bold text-purple-600 flex gap-2 items-center p-8">
         <div>
           <div className="text-4xl flex gap-2 items-center">
-              <Cloud className="h-16 w-16 text-purple-600" />
-              Claude9
-            </div>
-          <div className="text-2xl">Understand your emotions, track your mental health, and get personalized support - all with the power of AI.</div>
+            <Cloud className="h-16 w-16 text-purple-600" />
+            Claude9
+          </div>
+          <div className="text-2xl">Join us on your journey to better mental health!</div>
         </div>
       </Link>
       <div className="bg-gradient-to-b from-purple-100 to-blue-100 flex items-center justify-center p-4">
@@ -96,25 +145,15 @@ export default function SignUp() {
               <Cloud className="h-12 w-12 text-purple-500" />
             </div>
             <CardTitle className="text-2xl font-bold text-center">
-              Create your Claude9 account
+              Create your account
             </CardTitle>
             <CardDescription className="text-center">
-              Enter your details to start your mental health journey
+              Enter your details to get started with Claude9
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit}>
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="John Doe"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                  />
-                </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
@@ -152,16 +191,19 @@ export default function SignUp() {
                     <AlertDescription>{error}</AlertDescription>
                   </Alert>
                 )}
-                <Button type="submit" className="w-full">
+                <Button 
+                  type="submit" 
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium shadow-md shadow-purple-200 transition-all hover:shadow-lg hover:shadow-purple-200"
+                >
                   Sign Up
                 </Button>
               </div>
             </form>
           </CardContent>
-          <CardFooter>
-            <div className="text-sm text-center w-full">
+          <CardFooter className="flex flex-col space-y-4">
+            <div className="text-sm text-center">
               Already have an account?{" "}
-              <Link href="/login" className="text-purple-600 hover:underline">
+              <Link href="/login" className="text-purple-600 hover:text-purple-700 transition-colors">
                 Sign in
               </Link>
             </div>
