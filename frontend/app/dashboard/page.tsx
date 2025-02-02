@@ -45,7 +45,7 @@ export default function Dashboard() {
               </p>
               <Button asChild>
                 <Link
-                  href="/daily-activities"
+                  href="/flow"
                   className="inline-flex items-center"
                 >
                   Begin Today's Activities
