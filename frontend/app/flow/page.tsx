@@ -24,10 +24,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Search, ArrowLeft, ArrowRight, ChevronRight, ChevronLeft, Send, RefreshCw } from 'lucide-react'
-import { emotions as emotionsData } from '@/utils/emotions'
-import { sendThoughts, getInsights } from '@/utils/api'
+import { emotions as emotionsData } from '../utils/emotions'
+import axios from "axios";
+
+import config from "@/config.json";
+import { sendThoughts } from '@/utils/api'
 import { useRouter } from 'next/navigation'
 import { Skeleton } from "@/components/ui/skeleton"
+
+const API_BASE_URL = config.apiBaseUrl;
 
 // Define the shape of emotion objects
 type Emotion = {
@@ -76,7 +81,7 @@ export default function Flow() {
   const [reasonText, setReasonText] = useState('')  // user's reason for the selected emotion
   const [chatResponse, setChatResponse] = useState<string | null>(null)  // Add state for chat response
   const [isThinking, setIsThinking] = useState(false)  // Add loading state for API call
-  const MIN_CHARS = 20  // Minimum characters required
+  const MIN_CHARS = 4  // Minimum characters required
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false)
   const [lifestyleAnswers, setLifestyleAnswers] = useState<LifestyleQuestion[]>([
     { id: 'exercise', text: 'Did you exercise or play sports today?', checked: false },
@@ -89,6 +94,7 @@ export default function Flow() {
   const [hasFirstInput, setHasFirstInput] = useState(false);
   const MIN_CHAT_CHARS = 5; // Minimum characters for chat messages
   const [insights, setInsights] = useState<string | null>(null);
+  const [memeURL, setMemeURL] = useState<string | null>(null);
   const [loadingInsights, setLoadingInsights] = useState(false);
   const [showBackWarning, setShowBackWarning] = useState(false)
   const [pendingBackAction, setPendingBackAction] = useState(false)
@@ -164,28 +170,8 @@ export default function Flow() {
     return `${baseStyles} ${colorStyles} ${matchStyles} ${hoverStyles}`
   }
 
-  // Add this function to fetch insights
-  const fetchInsights = async () => {
-    if (!selectedEmotion) return;
-    
-    setLoadingInsights(true);
-    const { data, error } = await getInsights({
-      chatMessages,
-      lifestyleAnswers,
-      selectedEmotion: formatEmotionName(selectedEmotion.name)
-    });
-
-    if (error) {
-      console.error('Error getting insights:', error);
-      setError('Failed to generate insights. Please try again.');
-    } else if (data) {
-      setInsights(data.insights);
-    }
-    setLoadingInsights(false);
-  };
-
-  // Update handleContinue to fetch insights when moving to insights step
-  const handleContinue = () => {
+  // Handle continue button click
+  const handleContinue = async () => {
     if (step === 'emotion' && selectedEmotion) {
       setStep('reason')
     } else if (step === 'reason') {
@@ -196,18 +182,34 @@ export default function Flow() {
       }
     } else if (step === 'lifestyle') {
       setStep('analysis')
+      setLoadingInsights(true);
+      const res = await axios.post(
+        `${API_BASE_URL}/api/v1/profile/checkin`,
+        {
+          played_sport: lifestyleAnswers.find(q => q.id = 'exercise')?.checked,
+          met_friends: lifestyleAnswers.find(q => q.id = 'friends')?.checked,
+          slept_well: lifestyleAnswers.find(q => q.id = 'sleep')?.checked,
+          init_mood: selectedEmotion?.name,
+          thoughts: chatMessages.map(msg => `${msg.role}: ${msg.content}`).join("\n"),
+        },
+        {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("token")
+          }
+        }
+      );
+      setLoadingInsights(false);
+      setInsights(res.data.checkIn.insights_actions);
+      setMemeURL(res.data.meme);
     } else if (step === 'analysis') {
       setStep('insights')
-      fetchInsights() // Fetch insights when moving to insights step
     } else if (step === 'insights') {
-      setStep('actions')
-    } else if (step === 'actions') {
-      // TODO: Handle final submission
       console.log('Final submission:', {
         emotion: selectedEmotion,
         reason: reasonText,
         lifestyle: lifestyleAnswers
       })
+      router.push("/dashboard");
     }
   }
 
@@ -801,9 +803,16 @@ export default function Flow() {
                 </h2>
                 
                 {/* Placeholder for meme image */}
-                <div className="w-full aspect-video bg-gray-200/50 rounded-xl flex items-center justify-center">
-                  <p className="text-gray-500 text-lg">Meme placeholder here</p>
-                </div>
+                {
+                  (memeURL != undefined)
+                  ? 
+                  <img src={memeURL} className="w-full aspect-video bg-gray-200/50 rounded-xl flex items-center justify-center">
+                  </img>
+                  :
+                  <div className="w-full aspect-video bg-gray-200/50 rounded-xl flex items-center justify-center">
+                    <p className="text-gray-500 text-lg">Loading...</p>
+                  </div>
+                }
 
                 <Button 
                   size="lg" 
@@ -851,7 +860,7 @@ export default function Flow() {
                   className="rounded-xl bg-purple-500 hover:bg-purple-600 text-white gap-2"
                   onClick={handleContinue}
                 >
-                  Continue
+                  Back to home
                   <ChevronRight className="h-5 w-5" />
                 </Button>
               </div>

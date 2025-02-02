@@ -1,5 +1,5 @@
 import { Request, Response, Router } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Emotion, PrismaClient } from "@prisma/client";
 import { Anthropic } from '@anthropic-ai/sdk';
 import { TextBlock } from "@anthropic-ai/sdk/resources";
 
@@ -91,76 +91,122 @@ router.post("/thoughts", async (req: Request, res: Response) => {
 });
 
 router.post("/checkin", async (req: Request, res: Response) => {
-  const { userId, playedSport, metFriends, sleptWell, initMood, thoughts } = req.body;
+  const { userId, played_sport, met_friends, slept_well, init_mood, thoughts } = req.body;
+
+  const anthropic = new Anthropic();
+
+  let anthropicRes0 = (await anthropic.messages.create({
+    model: "claude-3-5-sonnet-20241022",
+    max_tokens: 1024,
+    messages: [
+      {"role": "user", "content": `
+Here's some information about a user:
+
+Played sport today? ${played_sport ? "Yes" : "No"}
+Met friends today? ${met_friends ? "Yes" : "No"}
+Slept well today? ${slept_well ? "Yes" : "No"}
+Initial mood: ${init_mood}
+
+Dialogue with assistant:
+
+${thoughts}
+
+Using the above information, generate an emotion from this list to summarize the user's feelings:
+  // Red (High Energy, Unpleasant)
+  ENRAGED
+  PANICKED
+  STRESSED
+  FRUSTRATED
+  ANGRY
+  ANXIOUS
+  WORRIED
+  IRRITATED
+  ANNOYED
+  DISGUSTED
+
+  // Blue (Low Energy, Unpleasant)
+  DISAPPOINTED
+  SAD
+  LONELY
+  HOPELESS
+  EXHAUSTED
+  DEPRESSED
+  BORED
+  DRAINED
+
+  // Yellow (High Energy, Pleasant)
+  SURPRISED
+  UPBEAT
+  FESTIVE
+  EXCITED
+  OPTIMISTIC
+  HAPPY
+  JOYFUL
+  HOPEFUL
+  BLISSFUL
+
+  // Green (Low Energy, Pleasant)
+  AT_EASE
+  CONTENT
+  LOVING
+  GRATEFUL
+  CALM
+  RELAXED
+  RESTFUL
+  PEACEFUL
+  SERENE
+Answer only with the emotion, in the following format: WORD
+  `}
+    ]
+  }));
+
+  let anthropicRes1 = (await anthropic.messages.create({
+    model: "claude-3-5-sonnet-20241022",
+    max_tokens: 1024,
+    messages: [
+      {"role": "user", "content": `
+Here's some information about a user:
+
+Played sport today? ${played_sport ? "Yes" : "No"}
+Met friends today? ${met_friends ? "Yes" : "No"}
+Slept well today? ${slept_well ? "Yes" : "No"}
+Initial mood: ${init_mood}
+
+Dialogue with assistant:
+
+${thoughts}
+
+Using the above information, generate a short reflective sentence for the user
+to promote personal growth and development.
+  `}
+    ]
+  }));
+
+  let overall_sentiment = (anthropicRes0.content[0] as TextBlock).text as Emotion;
+  let insights = (anthropicRes1.content[0] as TextBlock).text;
+
+  // [TODO] compute this
+  let playlistURL = "tbd";
 
   const checkIn = await prisma.checkIn.create({
     data: {
       user_id: userId,
       time: new Date(),
-      played_sport: playedSport,
-      met_friends: metFriends,
-      slept_well: sleptWell,
-      init_mood: initMood,
-      overall_sentiment: "CALM",
-      thoughts: "q and a and q and a",
-      insights_actions: "maybe don't do the thing thats making you sad?",
-      playlist: "playlistURL"
+      played_sport,
+      met_friends,
+      slept_well,
+      init_mood: init_mood as Emotion,
+      overall_sentiment: overall_sentiment as Emotion,
+      thoughts: thoughts,
+      insights_actions: insights,
+      playlist: playlistURL,
     }
   });
 
-  res.status(201);
-});
-
-router.post("/insights", async (req: Request, res: Response) => {
-  const { chatMessages, lifestyleAnswers, selectedEmotion } = req.body;
-
-  const anthropic = new Anthropic({
-    apiKey: process.env.CLAUDE_API_KEY
+  res.status(201).json({
+    checkIn,
+    meme: "https://shay.services/img/botprev/web/bananoplanet.png"
   });
-
-
-  const conversationContext = chatMessages
-    .map((msg: { role: string, content: string }) => `${msg.role}: ${msg.content}`)
-    .join('\n');
-
-  const lifestyleContext = [
-    `Exercise/Sports: ${lifestyleAnswers.find((q: { id: string, checked: boolean }) => q.id === 'exercise')?.checked ? 'Yes' : 'No'}`,
-    `Social Interaction: ${lifestyleAnswers.find((q: { id: string, checked: boolean }) => q.id === 'friends')?.checked ? 'Yes' : 'No'}`,
-    `Quality Sleep: ${lifestyleAnswers.find((q: { id: string, checked: boolean }) => q.id === 'sleep')?.checked ? 'Yes' : 'No'}`
-  ].join(', ');
-
-
-  try {
-    let anthropicRes = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
-      max_tokens: 1024,
-      system: `You are a mental health insights assistant. Provide brief, meaningful observations about the user's emotional state and lifestyle. Keep responses concise and natural, avoiding clinical language or explicit structure. Focus on one key insight and a gentle suggestion. Maintain professional distance and avoid personal pronouns.`,
-      messages: [{
-        role: "user",
-        content: `Based on this information:
-
-Current Emotion: ${selectedEmotion}
-${conversationContext}
-Lifestyle: ${lifestyleContext}
-
-Provide a brief, natural insight about their emotional state and a gentle suggestion. Keep it to 2-3 sentences maximum.`
-      }]
-    });
-
-    if (!anthropicRes.content || !anthropicRes.content[0] || !('text' in anthropicRes.content[0])) {
-      throw new Error('Invalid response from Claude');
-    }
-
-    res.status(200).json({
-      insights: anthropicRes.content[0].text
-    });
-  }
-  catch (error) {
-    console.error('Error generating insights:', error);
-    res.status(500).json({ 
-      error: error instanceof Error ? error.message : 'An error occurred while generating insights' 
-    });
-  }
 });
 
 export default router;
