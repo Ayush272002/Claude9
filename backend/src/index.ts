@@ -23,7 +23,7 @@ app.get("/", (_req: Request, res: Response) => {
 app.use("/api/v1/auth", authController);
 app.use("/api/v1/profile", authMiddleware, profileController);
 app.use("/api/v1/memes", authMiddleware, memegeneratorController);
-app.use("/api/v1/music", musicController);
+app.use("/api/v1/music", authMiddleware, musicController);
 
 app.listen(CLOUD_PORT, () => {
   console.log("Server is online and running on port " + CLOUD_PORT);
