@@ -13,8 +13,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Search, ArrowLeft, ArrowRight, ChevronRight, ChevronLeft } from 'lucide-react'
-import { emotions as emotionsData } from '../utils/emotions'
+import { Search, ArrowLeft, ArrowRight, ChevronRight, ChevronLeft, Send, RefreshCw } from 'lucide-react'
+import { emotions as emotionsData } from '@/utils/emotions'
+import { sendThoughts } from '@/utils/api'
 
 // Define the shape of emotion objects
 type Emotion = {
@@ -31,6 +32,11 @@ type LifestyleQuestion = {
   text: string
   checked: boolean
 }
+
+type ChatMessage = {
+  role: 'assistant' | 'user';
+  content: string;
+};
 
 const formatEmotionName = (str: string): string => {
   return str.split('_')
@@ -55,6 +61,8 @@ export default function Flow() {
   const [hoveredEmotion, setHoveredEmotion] = useState<string | null>(null)
   const [step, setStep] = useState<'emotion' | 'reason' | 'lifestyle' | 'analysis' | 'insights' | 'actions'>('emotion')
   const [reasonText, setReasonText] = useState('')  // user's reason for the selected emotion
+  const [chatResponse, setChatResponse] = useState<string | null>(null)  // Add state for chat response
+  const [isThinking, setIsThinking] = useState(false)  // Add loading state for API call
   const MIN_CHARS = 20  // Minimum characters required
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false)
   const [lifestyleAnswers, setLifestyleAnswers] = useState<LifestyleQuestion[]>([
@@ -62,6 +70,11 @@ export default function Flow() {
     { id: 'friends', text: 'Did you meet friends today?', checked: false },
     { id: 'sleep', text: 'Did you sleep well?', checked: false },
   ])
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [currentInput, setCurrentInput] = useState('');
+  const [isChatMode, setIsChatMode] = useState(false);
+  const [hasFirstInput, setHasFirstInput] = useState(false);
+  const MIN_CHAT_CHARS = 5; // Minimum characters for chat messages
 
   // Set emotions when component mounts
   useEffect(() => {
@@ -123,8 +136,13 @@ export default function Flow() {
   const handleContinue = () => {
     if (step === 'emotion' && selectedEmotion) {
       setStep('reason')
-    } else if (step === 'reason' && reasonText.length >= MIN_CHARS) {
-      setStep('lifestyle')
+    } else if (step === 'reason') {
+      // If in chat mode, just need hasFirstInput. If not in chat mode, need minimum chars
+      if ((isChatMode && hasFirstInput) || (!isChatMode && reasonText.length >= MIN_CHARS)) {
+        setStep('lifestyle')
+      } else {
+        setHasAttemptedSubmit(true)
+      }
     } else if (step === 'lifestyle') {
       setStep('analysis')
     } else if (step === 'analysis') {
@@ -138,8 +156,6 @@ export default function Flow() {
         reason: reasonText,
         lifestyle: lifestyleAnswers
       })
-    } else if (step === 'reason') {
-      setHasAttemptedSubmit(true)
     }
   }
 
@@ -158,11 +174,76 @@ export default function Flow() {
     }
   }
 
-  const handleUnsure = () => {
-    // use claude to ask prompt on new flow
-    // temporarily set reason text to "I am not sure"
-    setReasonText('I am not sure')
-  }
+  const handleUnsure = async () => {
+    if (!selectedEmotion) return;
+    
+    setIsChatMode(true);
+    setIsThinking(true);
+    
+    const { data, error } = await sendThoughts(undefined, formatEmotionName(selectedEmotion.name));
+
+    if (error) {
+      console.error('Error getting response:', error);
+      setChatMessages([{ 
+        role: 'assistant', 
+        content: `Error: ${error}. Click to retry.` 
+      }]);
+    }
+    
+    else if (data) {
+      const lastMessage = data.messages[data.messages.length - 1];
+      setChatMessages([{ role: 'assistant', content: lastMessage.content }]);
+    }
+
+    setIsThinking(false);
+  };
+
+  const handleChatSubmit = async (isResend: boolean = false) => {
+    if (!isResend && !currentInput.trim()) return;
+    if (!isResend && currentInput.length < MIN_CHAT_CHARS) return;
+
+    // If it's a resend, use the last user message
+    const messageToSend = isResend 
+      ? chatMessages[chatMessages.length - 2].content // Get the last user message
+      : currentInput;
+
+    // If it's a resend, remove the last failed message
+    const baseMessages = isResend 
+      ? chatMessages.slice(0, -1) // Remove the error message
+      : chatMessages;
+
+    // Add user's message to chat
+    const updatedMessages: ChatMessage[] = [...baseMessages];
+    if (!isResend) {
+      updatedMessages.push({ role: 'user' as const, content: messageToSend });
+    }
+    
+    setChatMessages(updatedMessages);
+    if (!isResend) {
+      setCurrentInput('');
+      setHasFirstInput(true);
+    }
+
+    // Only continue with API call if we haven't reached max messages
+    if (updatedMessages.length < 6) {
+      setIsThinking(true);
+
+      const { data, error } = await sendThoughts(updatedMessages);
+
+      if (error) {
+        console.error('Error getting response:', error);
+        setChatMessages([...updatedMessages, { 
+          role: 'assistant' as const, 
+          content: `Error: ${error}. Click to retry.` 
+        }]);
+      } else if (data) {
+        const lastMessage = data.messages[data.messages.length - 1];
+        setChatMessages([...updatedMessages, { role: 'assistant' as const, content: lastMessage.content }]);
+      }
+
+      setIsThinking(false);
+    }
+  };
 
   const handleDisabledClick = () => {
     if (reasonText.length < MIN_CHARS) {
@@ -382,71 +463,159 @@ export default function Flow() {
             <Card className="p-8 bg-white/80 backdrop-blur-sm">
               <div className="flex flex-col items-center gap-6">
                 {/* Header section w/ emoji and question */}
+                {/* TODO: Fix bug where going back, changing emotion, and returning doesn't reset the chat. Consider implementing
+                a warning message when going back. */}
                 <div className="flex items-center gap-4">
                   <span className="text-4xl">{selectedEmotion?.value}</span>
                   <h2 className="text-2xl font-medium text-gray-700">
-                    What made you feel {formatEmotionName(selectedEmotion?.name.toLowerCase() || '')}?
+                    What made you feel {formatEmotionName(selectedEmotion?.name || '').toLowerCase()}?
                   </h2>
                 </div>
 
                 {/* Text input section */}
                 <div className="w-full">
-                  <div className="relative">
-                    <Input
-                      className={`w-full text-lg p-4 bg-white/50 border-none focus-visible:ring-2 focus-visible:ring-purple-500/50 ${
-                        hasAttemptedSubmit && reasonText.length < MIN_CHARS ? 'ring-2 ring-orange-500/50' : ''
-                      }`}
-                      placeholder="Share your thoughts..."
-                      value={reasonText}
-                      onChange={(e) => {
-                        // Remove hashtags from input for future database storage retrieval and parsing purposes
-                        const cleanText = e.target.value.split('#').join('');
-                        setReasonText(cleanText);
-                        
-                        if (cleanText.length >= MIN_CHARS) {
-                          setHasAttemptedSubmit(false)
-                        }
-                      }}
-                    />
-                    
-                    {/* Error message for min. char. requirement */}
-                    {hasAttemptedSubmit && reasonText.length < MIN_CHARS && (
-                      <p className="absolute -bottom-6 left-0 text-sm text-orange-600">
-                        Please write at least {MIN_CHARS} characters ({MIN_CHARS - reasonText.length} more needed)
-                      </p>
-                    )}
-                  </div>
+                  {!isChatMode ? (
+                    <div className="relative">
+                      <Input
+                        className={`w-full text-lg p-4 bg-white/50 border-none focus-visible:ring-2 focus-visible:ring-purple-500/50 ${
+                          hasAttemptedSubmit && reasonText.length < MIN_CHARS ? 'ring-2 ring-orange-500/50' : ''
+                        }`}
+                        placeholder="Share your thoughts..."
+                        value={reasonText}
+                        onChange={(e) => {
+                          // Remove hashtags from input for future database storage retrieval and parsing purposes
+                          const cleanText = e.target.value.split('#').join('');
+                          setReasonText(cleanText);
+                          
+                          if (cleanText.length >= MIN_CHARS) {
+                            setHasAttemptedSubmit(false)
+                          }
+                        }}
+                      />
+
+                      {/* Error message for min. char. requirement */}
+                      {hasAttemptedSubmit && reasonText.length < MIN_CHARS && (
+                        <p className="absolute -bottom-6 left-0 text-sm text-orange-600">
+                          Please write at least {MIN_CHARS} characters ({MIN_CHARS - reasonText.length} more needed)
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Chat messages */}
+                      <div className="space-y-4">
+                        {chatMessages.map((message, index) => (
+                          <div
+                            key={index}
+                            className={`flex ${
+                              message.role === 'assistant' ? 'justify-start' : 'justify-end'
+                            }`}
+                          >
+                            <div
+                              className={`py-2 px-3 rounded-2xl max-w-[70%] ${
+                                message.role === 'assistant'
+                                  ? 'bg-gray-100 text-gray-700'
+                                  : 'bg-purple-500 text-white'
+                              }`}
+                            >
+                              <div className="flex items-start gap-2">
+                                <p className={`text-sm whitespace-pre-wrap flex-1 ${
+                                  message.role === 'user' ? 'font-normal' : ''
+                                }`}>{message.content}</p>
+                                {message.role === 'assistant' && message.content.startsWith('Error:') && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleChatSubmit(true)}
+                                    className="mt-[-4px] text-orange-600 hover:text-orange-700"
+                                  >
+                                    <RefreshCw className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {isThinking && (
+                          <div className="flex justify-start">
+                            <div className="py-2 px-3 bg-gray-100 rounded-2xl max-w-[70%]">
+                              <p className="text-sm text-gray-600">Thinking...</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Input field if we haven't reached max messages */}
+                      {chatMessages.length < 6 && !isThinking && (
+                        <div className="flex gap-2">
+                          <div className="flex-1 relative">
+                            <Input
+                              className={`w-full text-lg p-4 bg-white/50 border-none focus-visible:ring-2 focus-visible:ring-purple-500/50 ${
+                                currentInput.length > 0 && currentInput.length < MIN_CHAT_CHARS ? 'ring-2 ring-orange-500/50' : ''
+                              }`}
+                              placeholder="Type your message..."
+                              value={currentInput}
+                              onChange={(e) => setCurrentInput(e.target.value)}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter' && currentInput.length >= MIN_CHAT_CHARS) {
+                                  handleChatSubmit(false);
+                                }
+                              }}
+                            />
+                            {currentInput.length > 0 && currentInput.length < MIN_CHAT_CHARS && (
+                              <p className="absolute -bottom-6 left-0 text-sm text-orange-600">
+                                Please write at least {MIN_CHAT_CHARS} characters ({MIN_CHAT_CHARS - currentInput.length} more needed)
+                              </p>
+                            )}
+                          </div>
+                          <Button
+                            onClick={() => handleChatSubmit(false)}
+                            className="bg-purple-500 hover:bg-purple-600 text-white px-6"
+                            disabled={!currentInput.trim() || currentInput.length < MIN_CHAT_CHARS}
+                          >
+                            <Send className="h-5 w-5" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Navigation buttons */}
                 <div className="flex gap-4">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="rounded-xl gap-2"
-                    onClick={handleUnsure}
-                  >
-                    I'm not sure
-                  </Button>
+                  {!isChatMode && (
+                    <Button
+                      variant="outline" 
+                      size="lg"
+                      className="rounded-xl gap-2 relative overflow-hidden transition-all duration-300 hover:shadow-[0_0_15px_rgba(168,85,247,0.5)] before:absolute before:inset-0 before:-translate-x-full hover:before:translate-x-0 before:bg-gradient-to-r before:from-transparent before:via-purple-500/20 before:to-transparent before:transition-transform before:duration-700 before:ease-in-out border border-purple-500/30 hover:border-purple-500/70"
+                      onClick={handleUnsure}
+                      disabled={!selectedEmotion}
+                    >
+                      <span className="relative z-10">I'm not sure</span>
+                      <span className="relative z-10 animate-pulse">✨</span>
+                    </Button>
+                  )}
 
                   <TooltipProvider>
                     <Tooltip>
                       {/* Wrapper for the continue button with tooltip  */}
                       <TooltipTrigger asChild>
                         <div 
-                          onClick={reasonText.length < MIN_CHARS ? handleDisabledClick : undefined}
-                          className={reasonText.length < MIN_CHARS ? 'cursor-not-allowed' : ''}
+                          onClick={!isChatMode && reasonText.length < MIN_CHARS ? handleDisabledClick : undefined}
+                          className={!isChatMode && reasonText.length < MIN_CHARS ? 'cursor-not-allowed' : ''}
                         >
-                          {/* Continue button that changes appearance based on text length  */}
                           <Button 
                             size="lg" 
                             className={`rounded-xl gap-2 ${
-                              reasonText.length >= MIN_CHARS 
+                              (isChatMode && hasFirstInput) || (!isChatMode && reasonText.length >= MIN_CHARS)
                                 ? 'bg-purple-500 hover:bg-purple-600' 
-                                : 'bg-purple-500/50'  // dimmed when disabled
+                                : 'bg-purple-500/50'
                             } text-white`}
                             onClick={handleContinue}
-                            disabled={!reasonText.trim() || reasonText.length < MIN_CHARS}
+                            disabled={
+                              (isChatMode && !hasFirstInput) ||
+                              (!isChatMode && (!reasonText.trim() || reasonText.length < MIN_CHARS))
+                            }
                           >
                             Continue
                             <ChevronRight className="h-5 w-5" />
@@ -454,8 +623,7 @@ export default function Flow() {
                         </div>
                       </TooltipTrigger>
 
-                      {/* Show tooltip only when text is too short  */}
-                      {(reasonText.trim() && reasonText.length < MIN_CHARS) && (
+                      {(!isChatMode && reasonText.trim() && reasonText.length < MIN_CHARS) && (
                         <TooltipContent 
                           side="top" 
                           className="bg-white/90 border-none shadow-lg"
