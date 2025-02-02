@@ -104,7 +104,7 @@ export default function Flow() {
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) {
-      router.push('/')
+      router.push('/login')
       return
     }
 

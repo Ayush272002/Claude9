@@ -6,9 +6,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Brain, Smile, Sparkles, Music, Zap, Cloud } from "lucide-react";
 import type React from "react";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function Page() {
   const router = useRouter();
+
+  // Check for authentication on mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      router.push('/dashboard');
+    }
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-100 to-blue-100">
@@ -61,18 +70,18 @@ export default function Page() {
           <div className="grid md:grid-cols-3 gap-8">
             <FeatureCard
               icon={<Brain className="h-12 w-12 text-purple-500" />}
-              title="AI-Driven Journaling"
-              description="Get personalized prompts and affirmations to help you explore your thoughts and feelings."
+              title="AI-Driven Journalling"
+              description="Get personalised prompts and affirmations to help you explore your thoughts and feelings."
             />
             <FeatureCard
               icon={<Smile className="h-12 w-12 text-purple-500" />}
               title="Mood Tracking & Analysis"
-              description="Understand your emotional patterns with advanced sentiment analysis and trend visualization."
+              description="Understand your emotional patterns with advanced sentiment analysis and trend visualisation."
             />
             <FeatureCard
               icon={<Sparkles className="h-12 w-12 text-purple-500" />}
               title="Meme Therapy"
-              description="Enjoy personalized, mood-boosting memes generated just for you by our AI."
+              description="Enjoy personalised, mood-boosting memes generated just for you by our AI."
             />
             <FeatureCard
               icon={<Music className="h-12 w-12 text-purple-500" />}
