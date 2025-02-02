@@ -13,10 +13,21 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Search, ArrowLeft, ArrowRight, ChevronRight, ChevronLeft, Send, RefreshCw } from 'lucide-react'
 import { emotions as emotionsData } from '@/utils/emotions'
 import { sendThoughts, getInsights } from '@/utils/api'
 import { useRouter } from 'next/navigation'
+import { Skeleton } from "@/components/ui/skeleton"
 
 // Define the shape of emotion objects
 type Emotion = {
@@ -79,6 +90,8 @@ export default function Flow() {
   const MIN_CHAT_CHARS = 5; // Minimum characters for chat messages
   const [insights, setInsights] = useState<string | null>(null);
   const [loadingInsights, setLoadingInsights] = useState(false);
+  const [showBackWarning, setShowBackWarning] = useState(false)
+  const [pendingBackAction, setPendingBackAction] = useState(false)
 
   // Set emotions when component mounts
   useEffect(() => {
@@ -91,6 +104,15 @@ export default function Flow() {
     setEmotions(emotionsData)
     setLoading(false)
   }, [router])
+
+  // Add effect to reset chat states when emotion changes
+  useEffect(() => {
+    setChatMessages([])
+    setCurrentInput('')
+    setIsChatMode(false)
+    setHasFirstInput(false)
+    setReasonText('')
+  }, [selectedEmotion])
 
   // Helper functions for emotion filtering and display
   const getQuadrantEmotions = (energy: 'high' | 'low', pleasant: boolean) => {
@@ -189,8 +211,14 @@ export default function Flow() {
     }
   }
 
-  // Handle back button click
+  // Modify handleBack to show warning if needed
   const handleBack = () => {
+    if (step === 'reason' && (reasonText.length > 0 || chatMessages.length > 0)) {
+      setShowBackWarning(true)
+      setPendingBackAction(true)
+      return
+    }
+    
     if (step === 'reason') {
       setStep('emotion')
     } else if (step === 'lifestyle') {
@@ -202,6 +230,19 @@ export default function Flow() {
     } else if (step === 'actions') {
       setStep('insights')
     }
+  }
+
+  const confirmBack = () => {
+    if (pendingBackAction) {
+      setStep('emotion')
+      setPendingBackAction(false)
+    }
+    setShowBackWarning(false)
+  }
+
+  const cancelBack = () => {
+    setPendingBackAction(false)
+    setShowBackWarning(false)
   }
 
   const handleUnsure = async () => {
@@ -340,6 +381,32 @@ export default function Flow() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-100 to-blue-100 select-none">
+      {/* Add alert dialogue for going back */}
+      <AlertDialog open={showBackWarning} onOpenChange={setShowBackWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Going back will clear your current discussion. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              onClick={cancelBack}
+              className="rounded-xl hover:bg-gray-100 border-gray-200"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmBack}
+              className="rounded-xl bg-purple-500 hover:bg-purple-600 text-white"
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Navigation Header */}
       <div className="container mx-auto py-3 px-4">
         <div className="flex justify-between items-center mb-3">
@@ -493,8 +560,6 @@ export default function Flow() {
             <Card className="p-8 bg-white/80 backdrop-blur-sm">
               <div className="flex flex-col items-center gap-6">
                 {/* Header section w/ emoji and question */}
-                {/* TODO: Fix bug where going back, changing emotion, and returning doesn't reset the chat. Consider implementing
-                a warning message when going back. */}
                 <div className="flex items-center gap-4">
                   <span className="text-4xl">{selectedEmotion?.value}</span>
                   <h2 className="text-2xl font-medium text-gray-700">
@@ -568,8 +633,11 @@ export default function Flow() {
                         ))}
                         {isThinking && (
                           <div className="flex justify-start">
-                            <div className="py-2 px-3 bg-gray-100 rounded-2xl max-w-[70%]">
-                              <p className="text-sm text-gray-600">Thinking...</p>
+                            <div className="py-2 px-3 bg-gray-100 rounded-2xl max-w-[70%] w-[300px]">
+                              <div className="space-y-2">
+                                <Skeleton className="h-4 w-[250px]" />
+                                <Skeleton className="h-4 w-[200px]" />
+                              </div>
                             </div>
                           </div>
                         )}
@@ -758,8 +826,12 @@ export default function Flow() {
                 
                 <div className="w-full p-6 bg-white/50 rounded-xl">
                   {loadingInsights ? (
-                    <div className="flex items-center justify-center py-8">
-                      <p className="text-gray-600">Analyzing your responses...</p>
+                    <div className="flex flex-col gap-4 py-8">
+                      <Skeleton className="h-4 w-[300px]" />
+                      <Skeleton className="h-4 w-[250px]" />
+                      <Skeleton className="h-4 w-[280px]" />
+                      <Skeleton className="h-4 w-[260px]" />
+                      <Skeleton className="h-4 w-[240px]" />
                     </div>
                   ) : insights ? (
                     <div className="prose prose-purple max-w-none">
