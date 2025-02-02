@@ -16,8 +16,8 @@ app.use(express.json());
 
 // Configure CORS
 app.use(cors({
-  origin: "http://localhost:3000", // Specify your frontend origin
-  credentials: true, // Allow credentials (cookies, auth headers)
+  origin: "https://claude9.vercel.app", 
+  credentials: true, 
 }));
 
 app.get("/", (_req: Request, res: Response) => {
