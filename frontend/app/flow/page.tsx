@@ -27,6 +27,7 @@ import { Search, ArrowLeft, ArrowRight, ChevronRight, ChevronLeft, Send, Refresh
 import { emotions as emotionsData } from '@/utils/emotions'
 import { sendThoughts, getInsights } from '@/utils/api'
 import { useRouter } from 'next/navigation'
+import { Skeleton } from "@/components/ui/skeleton"
 
 // Define the shape of emotion objects
 type Emotion = {
@@ -632,8 +633,11 @@ export default function Flow() {
                         ))}
                         {isThinking && (
                           <div className="flex justify-start">
-                            <div className="py-2 px-3 bg-gray-100 rounded-2xl max-w-[70%]">
-                              <p className="text-sm text-gray-600">Thinking...</p>
+                            <div className="py-2 px-3 bg-gray-100 rounded-2xl max-w-[70%] w-[300px]">
+                              <div className="space-y-2">
+                                <Skeleton className="h-4 w-[250px]" />
+                                <Skeleton className="h-4 w-[200px]" />
+                              </div>
                             </div>
                           </div>
                         )}
@@ -822,8 +826,12 @@ export default function Flow() {
                 
                 <div className="w-full p-6 bg-white/50 rounded-xl">
                   {loadingInsights ? (
-                    <div className="flex items-center justify-center py-8">
-                      <p className="text-gray-600">Analyzing your responses...</p>
+                    <div className="flex flex-col gap-4 py-8">
+                      <Skeleton className="h-4 w-[300px]" />
+                      <Skeleton className="h-4 w-[250px]" />
+                      <Skeleton className="h-4 w-[280px]" />
+                      <Skeleton className="h-4 w-[260px]" />
+                      <Skeleton className="h-4 w-[240px]" />
                     </div>
                   ) : insights ? (
                     <div className="prose prose-purple max-w-none">
