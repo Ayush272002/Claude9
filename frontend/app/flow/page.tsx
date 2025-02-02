@@ -92,6 +92,7 @@ export default function Flow() {
   const [loadingInsights, setLoadingInsights] = useState(false);
   const [showBackWarning, setShowBackWarning] = useState(false)
   const [pendingBackAction, setPendingBackAction] = useState(false)
+  const [isRootRedirect, setIsRootRedirect] = useState(false)
 
   // Set emotions when component mounts
   useEffect(() => {
@@ -213,9 +214,21 @@ export default function Flow() {
 
   // Modify handleBack to show warning if needed
   const handleBack = () => {
+    if (step === 'emotion') {
+      if (selectedEmotion) {
+        setShowBackWarning(true)
+        setPendingBackAction(true)
+        setIsRootRedirect(true)
+        return
+      }
+      router.push('/')
+      return
+    }
+    
     if (step === 'reason' && (reasonText.length > 0 || chatMessages.length > 0)) {
       setShowBackWarning(true)
       setPendingBackAction(true)
+      setIsRootRedirect(false)
       return
     }
     
@@ -234,14 +247,20 @@ export default function Flow() {
 
   const confirmBack = () => {
     if (pendingBackAction) {
-      setStep('emotion')
+      if (isRootRedirect) {
+        router.push('/')
+      } else {
+        setStep('emotion')
+      }
       setPendingBackAction(false)
+      setIsRootRedirect(false)
     }
     setShowBackWarning(false)
   }
 
   const cancelBack = () => {
     setPendingBackAction(false)
+    setIsRootRedirect(false)
     setShowBackWarning(false)
   }
 
@@ -387,7 +406,10 @@ export default function Flow() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              Going back will clear your current discussion. This action cannot be undone.
+              {isRootRedirect 
+                ? "Going back to home will clear your current progress. This action cannot be undone."
+                : "Going back will clear your current discussion. This action cannot be undone."
+              }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -415,7 +437,6 @@ export default function Flow() {
             size="icon" 
             className="hover:bg-white/20 rounded-xl"
             onClick={handleBack}
-            disabled={step === 'emotion'}
           >
             <ArrowLeft className="h-5 w-5 text-gray-600" />
           </Button>
