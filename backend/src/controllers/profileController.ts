@@ -2,6 +2,7 @@ import { Request, Response, Router } from "express";
 import { Emotion, PrismaClient } from "@prisma/client";
 import { Anthropic } from '@anthropic-ai/sdk';
 import { TextBlock } from "@anthropic-ai/sdk/resources";
+import { generateMeme } from "../utils/memeGenerator";
 
 const prisma = new PrismaClient();
 
@@ -93,7 +94,9 @@ router.post("/thoughts", async (req: Request, res: Response) => {
 router.post("/checkin", async (req: Request, res: Response) => {
   const { userId, played_sport, met_friends, slept_well, init_mood, thoughts } = req.body;
 
-  const anthropic = new Anthropic();
+  const anthropic = new Anthropic({
+    apiKey: process.env.CLAUDE_API_KEY
+  });
 
   let anthropicRes0 = (await anthropic.messages.create({
     model: "claude-3-5-sonnet-20241022",
@@ -205,7 +208,7 @@ to promote personal growth and development.
 
   res.status(201).json({
     checkIn,
-    meme: "https://shay.services/img/botprev/web/bananoplanet.png"
+    meme: await generateMeme(`Overall sentiment: ${overall_sentiment}\nThoughts: ${thoughts}`)
   });
 });
 
