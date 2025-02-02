@@ -7,7 +7,7 @@
 
 ## Overview
 
-Claude9 is an intelligent, accessibility-focused AI companion designed to empower users in tracking, understanding, and managing their mental well-being. By leveraging **Anthropic AI** and advanced **sentiment analysis**, Claude9 provides real-time insights into emotional patterns, helping users make informed decisions about their mental health.
+Claude9 is an intelligent, accessibility-focused AI companion designed to empower users in tracking, understanding, and managing their mental well-being. By leveraging **Anthropic AI**, Claude9 provides real-time insights into emotional patterns, helping users make informed decisions about their mental health.
 
 With an intuitive interface and intelligent recommendation system, Claude9 suggests **personalized self-care activities, mindfulness exercises, and even memes** based on individual mood trends.
 
@@ -36,6 +36,12 @@ Claude9 was built with a **Next.js frontend** and an **Express.js backend**.
 - **Integrations:** Spotify API
 - **Deployment:** Vercel (Frontend), Render (Backend)
 
+## Demo Video
+[![Watch the video](https://img.youtube.com/vi/T-D1KVIuvjA/maxresdefault.jpg)](https://youtu.be/T-D1KVIuvjA)
+
+## Set-up
+
+You can visit our webapp at: [claude9.vercel.app](https://claude9.vercel.app/)
 
 
 ## What's Next for Claude9?
