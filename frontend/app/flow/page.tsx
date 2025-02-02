@@ -390,8 +390,18 @@ export default function Flow() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={cancelBack}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmBack}>Continue</AlertDialogAction>
+            <AlertDialogCancel 
+              onClick={cancelBack}
+              className="rounded-xl hover:bg-gray-100 border-gray-200"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmBack}
+              className="rounded-xl bg-purple-500 hover:bg-purple-600 text-white"
+            >
+              Continue
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
