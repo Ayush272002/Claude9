@@ -13,7 +13,7 @@ router.get("/", async (req: Request, res: Response) => {
 
   const user = await prisma.user.findFirst({
     where: {
-      user_id: userId
+      user_id: userId,
     },
   });
 
@@ -27,7 +27,7 @@ router.get("/", async (req: Request, res: Response) => {
     email: user.email,
     opt_out_of_memes: user.opt_out_of_memes,
     utc_offset: user.utc_offset,
-    daily_reminder_freq: user.daily_reminder_freq
+    daily_reminder_freq: user.daily_reminder_freq,
   });
 });
 
