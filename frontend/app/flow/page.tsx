@@ -13,6 +13,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Search, ArrowLeft, ArrowRight, ChevronRight, ChevronLeft, Send, RefreshCw } from 'lucide-react'
 import { emotions as emotionsData } from '@/utils/emotions'
 import { sendThoughts, getInsights } from '@/utils/api'
@@ -79,6 +89,8 @@ export default function Flow() {
   const MIN_CHAT_CHARS = 5; // Minimum characters for chat messages
   const [insights, setInsights] = useState<string | null>(null);
   const [loadingInsights, setLoadingInsights] = useState(false);
+  const [showBackWarning, setShowBackWarning] = useState(false)
+  const [pendingBackAction, setPendingBackAction] = useState(false)
 
   // Set emotions when component mounts
   useEffect(() => {
@@ -91,6 +103,15 @@ export default function Flow() {
     setEmotions(emotionsData)
     setLoading(false)
   }, [router])
+
+  // Add effect to reset chat states when emotion changes
+  useEffect(() => {
+    setChatMessages([])
+    setCurrentInput('')
+    setIsChatMode(false)
+    setHasFirstInput(false)
+    setReasonText('')
+  }, [selectedEmotion])
 
   // Helper functions for emotion filtering and display
   const getQuadrantEmotions = (energy: 'high' | 'low', pleasant: boolean) => {
@@ -189,8 +210,14 @@ export default function Flow() {
     }
   }
 
-  // Handle back button click
+  // Modify handleBack to show warning if needed
   const handleBack = () => {
+    if (step === 'reason' && (reasonText.length > 0 || chatMessages.length > 0)) {
+      setShowBackWarning(true)
+      setPendingBackAction(true)
+      return
+    }
+    
     if (step === 'reason') {
       setStep('emotion')
     } else if (step === 'lifestyle') {
@@ -202,6 +229,19 @@ export default function Flow() {
     } else if (step === 'actions') {
       setStep('insights')
     }
+  }
+
+  const confirmBack = () => {
+    if (pendingBackAction) {
+      setStep('emotion')
+      setPendingBackAction(false)
+    }
+    setShowBackWarning(false)
+  }
+
+  const cancelBack = () => {
+    setPendingBackAction(false)
+    setShowBackWarning(false)
   }
 
   const handleUnsure = async () => {
@@ -340,6 +380,22 @@ export default function Flow() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-100 to-blue-100 select-none">
+      {/* Add alert dialogue for going back */}
+      <AlertDialog open={showBackWarning} onOpenChange={setShowBackWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Going back will clear your current discussion. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelBack}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmBack}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Navigation Header */}
       <div className="container mx-auto py-3 px-4">
         <div className="flex justify-between items-center mb-3">
@@ -493,8 +549,6 @@ export default function Flow() {
             <Card className="p-8 bg-white/80 backdrop-blur-sm">
               <div className="flex flex-col items-center gap-6">
                 {/* Header section w/ emoji and question */}
-                {/* TODO: Fix bug where going back, changing emotion, and returning doesn't reset the chat. Consider implementing
-                a warning message when going back. */}
                 <div className="flex items-center gap-4">
                   <span className="text-4xl">{selectedEmotion?.value}</span>
                   <h2 className="text-2xl font-medium text-gray-700">
