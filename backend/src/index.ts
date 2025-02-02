@@ -13,6 +13,8 @@ let startTime = 0;
 
 const app = express();
 app.use(express.json());
+
+// Configure CORS
 app.use(cors());
 
 app.get("/", (_req: Request, res: Response) => {
