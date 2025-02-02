@@ -48,7 +48,7 @@ export default function Page() {
             Understand your emotions, track your mental health, and get
             personalized support - all with the power of AI.
           </p>
-          <Button size="lg" className="text-lg">
+          <Button size="lg" className="text-lg" onClick={() => router.push("/flow")}>
             Start Your Journey
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
