@@ -3,6 +3,7 @@ import { Emotion, PrismaClient } from "@prisma/client";
 import { Anthropic } from '@anthropic-ai/sdk';
 import { TextBlock } from "@anthropic-ai/sdk/resources";
 import { generateMeme } from "../utils/memeGenerator";
+import { searchPlaylistsTokenless } from "./musicController";
 
 const prisma = new PrismaClient();
 
@@ -189,8 +190,7 @@ to promote personal growth and development.
   let overall_sentiment = (anthropicRes0.content[0] as TextBlock).text as Emotion;
   let insights = (anthropicRes1.content[0] as TextBlock).text;
 
-  // [TODO] compute this
-  let playlistURL = "tbd";
+  let playlistURL = (await searchPlaylistsTokenless(overall_sentiment)).url;
 
   const checkIn = await prisma.checkIn.create({
     data: {
