@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/tooltip"
 import { Search, ArrowLeft, ArrowRight, ChevronRight, ChevronLeft, Send, RefreshCw } from 'lucide-react'
 import { emotions as emotionsData } from '@/utils/emotions'
-import { sendThoughts } from '@/utils/api'
+import { sendThoughts, getInsights } from '@/utils/api'
+import { useRouter } from 'next/navigation'
 
 // Define the shape of emotion objects
 type Emotion = {
@@ -52,6 +53,7 @@ const formatEmotionName = (str: string): string => {
 }
 
 export default function Flow() {
+  const router = useRouter()
   // State management for our emotion picker
   const [emotions, setEmotions] = useState<Emotion[]>([])
   const [loading, setLoading] = useState(true)
@@ -75,12 +77,20 @@ export default function Flow() {
   const [isChatMode, setIsChatMode] = useState(false);
   const [hasFirstInput, setHasFirstInput] = useState(false);
   const MIN_CHAT_CHARS = 5; // Minimum characters for chat messages
+  const [insights, setInsights] = useState<string | null>(null);
+  const [loadingInsights, setLoadingInsights] = useState(false);
 
   // Set emotions when component mounts
   useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      router.push('/')
+      return
+    }
+
     setEmotions(emotionsData)
     setLoading(false)
-  }, [])
+  }, [router])
 
   // Helper functions for emotion filtering and display
   const getQuadrantEmotions = (energy: 'high' | 'low', pleasant: boolean) => {
@@ -132,12 +142,31 @@ export default function Flow() {
     return `${baseStyles} ${colorStyles} ${matchStyles} ${hoverStyles}`
   }
 
-  // Handle continue button click
+  // Add this function to fetch insights
+  const fetchInsights = async () => {
+    if (!selectedEmotion) return;
+    
+    setLoadingInsights(true);
+    const { data, error } = await getInsights({
+      chatMessages,
+      lifestyleAnswers,
+      selectedEmotion: formatEmotionName(selectedEmotion.name)
+    });
+
+    if (error) {
+      console.error('Error getting insights:', error);
+      setError('Failed to generate insights. Please try again.');
+    } else if (data) {
+      setInsights(data.insights);
+    }
+    setLoadingInsights(false);
+  };
+
+  // Update handleContinue to fetch insights when moving to insights step
   const handleContinue = () => {
     if (step === 'emotion' && selectedEmotion) {
       setStep('reason')
     } else if (step === 'reason') {
-      // If in chat mode, just need hasFirstInput. If not in chat mode, need minimum chars
       if ((isChatMode && hasFirstInput) || (!isChatMode && reasonText.length >= MIN_CHARS)) {
         setStep('lifestyle')
       } else {
@@ -147,6 +176,7 @@ export default function Flow() {
       setStep('analysis')
     } else if (step === 'analysis') {
       setStep('insights')
+      fetchInsights() // Fetch insights when moving to insights step
     } else if (step === 'insights') {
       setStep('actions')
     } else if (step === 'actions') {
@@ -727,10 +757,21 @@ export default function Flow() {
                 </h2>
                 
                 <div className="w-full p-6 bg-white/50 rounded-xl">
-                  <p className="text-gray-700 text-lg leading-relaxed">
-                    Here are some insights about your emotional state and daily activities...
-                    [Placeholder pt2]
-                  </p>
+                  {loadingInsights ? (
+                    <div className="flex items-center justify-center py-8">
+                      <p className="text-gray-600">Analyzing your responses...</p>
+                    </div>
+                  ) : insights ? (
+                    <div className="prose prose-purple max-w-none">
+                      <div className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap">
+                        {insights}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center py-8">
+                      <p className="text-red-500">Failed to load insights. Please try again.</p>
+                    </div>
+                  )}
                 </div>
 
                 <Button 

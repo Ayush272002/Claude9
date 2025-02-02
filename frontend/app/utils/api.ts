@@ -59,4 +59,16 @@ export async function sendThoughts(messages?: Message[], emotion?: string): Prom
     method: 'POST',
     body: JSON.stringify({ messages, emotion }),
   });
+}
+
+// Gets insights based on user's emotional state and lifestyle
+export async function getInsights(data: {
+  chatMessages: Message[];
+  lifestyleAnswers: { id: string; checked: boolean; }[];
+  selectedEmotion: string;
+}): Promise<{ data?: { insights: string }; error?: string }> {
+  return apiClient<{ insights: string }>('/profile/insights', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
 } 
