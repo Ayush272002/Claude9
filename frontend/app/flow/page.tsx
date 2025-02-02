@@ -837,8 +837,10 @@ export default function Flow() {
                 {
                   (memeURL != undefined)
                   ? 
-                  <img src={memeURL} className="w-full aspect-video bg-gray-200/50 rounded-xl flex items-center justify-center">
-                  </img>
+                  <div className="w-full aspect-video bg-gray-200/50 rounded-xl flex items-center justify-center">
+                    <img src={memeURL} className="h-full bg-white">                    
+                    </img>
+                  </div>
                   :
                   <div className="w-full aspect-video bg-gray-200/50 rounded-xl flex items-center justify-center">
                     <p className="text-gray-500 text-lg">Loading...</p>

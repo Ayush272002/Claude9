@@ -2,6 +2,7 @@ import { Request, Response, Router } from "express";
 import { Emotion, PrismaClient } from "@prisma/client";
 import { Anthropic } from '@anthropic-ai/sdk';
 import { TextBlock } from "@anthropic-ai/sdk/resources";
+import { generateMeme } from "../utils/memeGenerator";
 
 const prisma = new PrismaClient();
 
@@ -208,7 +209,7 @@ to promote personal growth and development.
 
   res.status(201).json({
     checkIn,
-    meme: "https://shay.services/img/botprev/web/bananoplanet.png"
+    meme: await generateMeme(`Overall sentiment: ${overall_sentiment}\nThoughts: ${thoughts}`)
   });
 });
 
