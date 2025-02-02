@@ -15,6 +15,11 @@ import {
 } from "@/components/ui/tooltip"
 import { Search, ArrowLeft, ArrowRight, ChevronRight, ChevronLeft } from 'lucide-react'
 import { emotions as emotionsData } from '../utils/emotions'
+import axios from "axios";
+
+import config from "@/config.json";
+
+const API_BASE_URL = config.apiBaseUrl;
 
 // Define the shape of emotion objects
 type Emotion = {
@@ -55,7 +60,7 @@ export default function Flow() {
   const [hoveredEmotion, setHoveredEmotion] = useState<string | null>(null)
   const [step, setStep] = useState<'emotion' | 'reason' | 'lifestyle' | 'analysis' | 'insights' | 'actions'>('emotion')
   const [reasonText, setReasonText] = useState('')  // user's reason for the selected emotion
-  const MIN_CHARS = 20  // Minimum characters required
+  const MIN_CHARS = 4  // Minimum characters required
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false)
   const [lifestyleAnswers, setLifestyleAnswers] = useState<LifestyleQuestion[]>([
     { id: 'exercise', text: 'Did you exercise or play sports today?', checked: false },
@@ -120,7 +125,7 @@ export default function Flow() {
   }
 
   // Handle continue button click
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (step === 'emotion' && selectedEmotion) {
       setStep('reason')
     } else if (step === 'reason' && reasonText.length >= MIN_CHARS) {
@@ -132,12 +137,26 @@ export default function Flow() {
     } else if (step === 'insights') {
       setStep('actions')
     } else if (step === 'actions') {
-      // TODO: Handle final submission
       console.log('Final submission:', {
         emotion: selectedEmotion,
         reason: reasonText,
         lifestyle: lifestyleAnswers
       })
+      const res = await axios.post(
+        `${API_BASE_URL}/api/v1/profile/checkin`,
+        {
+          played_sport: lifestyleAnswers.find(q => q.id = 'exercise')?.checked,
+          met_friends: lifestyleAnswers.find(q => q.id = 'friends')?.checked,
+          slept_well: lifestyleAnswers.find(q => q.id = 'sleep')?.checked,
+          init_mood: selectedEmotion?.name,
+          thoughts: "q and a and q and a",
+        },
+        {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("token")
+          }
+        }
+      );
     } else if (step === 'reason') {
       setHasAttemptedSubmit(true)
     }

@@ -1,5 +1,5 @@
 import { Request, Response, Router } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Emotion, PrismaClient } from "@prisma/client";
 import { Anthropic } from '@anthropic-ai/sdk';
 import { TextBlock } from "@anthropic-ai/sdk/resources";
 
@@ -61,24 +61,121 @@ router.post("/thoughts", async (req: Request, res: Response) => {
 
 
 router.post("/checkin", async (req: Request, res: Response) => {
-  const { userId, playedSport, metFriends, sleptWell, initMood, thoughts } = req.body;
+  const { userId, played_sport, met_friends, slept_well, init_mood, thoughts } = req.body;
+
+  const anthropic = new Anthropic();
+
+  let anthropicRes0 = (await anthropic.messages.create({
+    model: "claude-3-5-sonnet-20241022",
+    max_tokens: 1024,
+    messages: [
+      {"role": "user", "content": `
+Here's some information about a user:
+
+Played sport today? ${played_sport ? "Yes" : "No"}
+Met friends today? ${met_friends ? "Yes" : "No"}
+Slept well today? ${slept_well ? "Yes" : "No"}
+Initial mood: ${init_mood}
+
+Dialogue with assistant:
+
+${thoughts}
+
+Using the above information, generate an emotion from this list to summarize the user's feelings:
+  // Red (High Energy, Unpleasant)
+  ENRAGED
+  PANICKED
+  STRESSED
+  FRUSTRATED
+  ANGRY
+  ANXIOUS
+  WORRIED
+  IRRITATED
+  ANNOYED
+  DISGUSTED
+
+  // Blue (Low Energy, Unpleasant)
+  DISAPPOINTED
+  SAD
+  LONELY
+  HOPELESS
+  EXHAUSTED
+  DEPRESSED
+  BORED
+  DRAINED
+
+  // Yellow (High Energy, Pleasant)
+  SURPRISED
+  UPBEAT
+  FESTIVE
+  EXCITED
+  OPTIMISTIC
+  HAPPY
+  JOYFUL
+  HOPEFUL
+  BLISSFUL
+
+  // Green (Low Energy, Pleasant)
+  AT_EASE
+  CONTENT
+  LOVING
+  GRATEFUL
+  CALM
+  RELAXED
+  RESTFUL
+  PEACEFUL
+  SERENE
+Answer only with the emotion, in the following format: WORD
+  `}
+    ]
+  }));
+
+  let anthropicRes1 = (await anthropic.messages.create({
+    model: "claude-3-5-sonnet-20241022",
+    max_tokens: 1024,
+    messages: [
+      {"role": "user", "content": `
+Here's some information about a user:
+
+Played sport today? ${played_sport ? "Yes" : "No"}
+Met friends today? ${met_friends ? "Yes" : "No"}
+Slept well today? ${slept_well ? "Yes" : "No"}
+Initial mood: ${init_mood}
+
+Dialogue with assistant:
+
+${thoughts}
+
+Using the above information, generate a short reflective sentence for the user
+to promote personal growth and development.
+  `}
+    ]
+  }));
+
+  let overall_sentiment = (anthropicRes0.content[0] as TextBlock).text as Emotion;
+  let actions = (anthropicRes1.content[0] as TextBlock).text;
+
+  // [TODO] compute this
+  let playlistURL = "tbd";
 
   const checkIn = await prisma.checkIn.create({
     data: {
       user_id: userId,
       time: new Date(),
-      played_sport: playedSport,
-      met_friends: metFriends,
-      slept_well: sleptWell,
-      init_mood: initMood,
-      overall_sentiment: "CALM",
-      thoughts: "q and a and q and a",
-      insights_actions: "maybe don't do the thing thats making you sad?",
-      playlist: "playlistURL"
+      played_sport,
+      met_friends,
+      slept_well,
+      init_mood: init_mood as Emotion,
+      overall_sentiment: overall_sentiment as Emotion,
+      thoughts: thoughts,
+      insights_actions: actions,
+      playlist: playlistURL
     }
   });
 
-  res.status(201);
+  res.status(201).json({
+    checkIn
+  });
 });
 
 export default router;
