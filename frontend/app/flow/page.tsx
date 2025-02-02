@@ -891,6 +891,10 @@ export default function Flow() {
                       <Skeleton className="h-4 w-[280px]" />
                       <Skeleton className="h-4 w-[260px]" />
                       <Skeleton className="h-4 w-[240px]" />
+                      <div className="mt-8 space-y-3">
+                        <Skeleton className="h-6 w-[200px]" />
+                        <Skeleton className="h-12 w-full rounded-lg" />
+                      </div>
                     </div>
                   ) : insights ? (
                     <div className="prose prose-purple max-w-none">
@@ -900,14 +904,36 @@ export default function Flow() {
                           <div className="text-purple-600 text-2xl">Feedback</div>  
                         </div>
                         {insights}
-                        <br /><br />
-                        <a href={playlistURL || undefined} className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap">
-                          <div className="flex gap-2">
-                            <Music className="h-8 w-8 text-purple-600" />
-                            <div className="text-purple-600 text-2xl">Suggested playlist</div>  
+                        
+                        {playlistURL && (
+                          <div className="mt-8 space-y-3">
+                            <div className="flex gap-2 items-center">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100">
+                                <Music className="h-5 w-5 text-purple-600" />
+                              </div>
+                              <div className="text-purple-600 text-xl font-semibold">Music Therapy</div>  
+                            </div>
+                            <a 
+                              href={playlistURL} 
+                              target="_blank"
+                              rel="noopener noreferrer" 
+                              className="group block w-full p-4 bg-white/50 hover:bg-purple-50 rounded-lg border border-purple-200 shadow-sm hover:shadow-md transition-all duration-200 text-gray-700 no-underline hover:text-purple-700"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 group-hover:bg-purple-200 transition-colors">
+                                    <Music className="h-5 w-5 text-purple-600" />
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">Personalised Playlist</span>
+                                    <span className="text-sm text-gray-500">Open in Spotify</span>
+                                  </div>
+                                </div>
+                                <ArrowRight className="h-5 w-5 text-purple-500 group-hover:translate-x-1 transition-transform" />
+                              </div>
+                            </a>
                           </div>
-                          {playlistURL}
-                        </a>
+                        )}
                       </div>
                     </div>
                   ) : (
