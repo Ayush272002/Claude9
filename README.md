@@ -37,7 +37,7 @@ Claude9 was built with a **Next.js frontend** and an **Express.js backend**.
 - **Deployment:** Vercel (Frontend), Render (Backend)
 
 ## Demo Video
-[![Watch the video](https://img.youtube.com/vi/T-D1KVIuvjA/maxresdefault.jpg)](https://youtu.be/T-D1KVIuvjA)
+[![Watch the video](https://cdn.discordapp.com/attachments/1334936730284986461/1335579336761282560/Screenshot_from_2025-02-02_11-53-13.png?ex=67a0aeaf&is=679f5d2f&hm=ac1a2049118fad2865c39d5af732089b603de24e68623ce832d281200de51c41&)](https://youtu.be/Z9Cpl__wBtg)
 
 ## Set-up
 
