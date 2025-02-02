@@ -23,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Search, ArrowLeft, ArrowRight, ChevronRight, ChevronLeft, Send, RefreshCw } from 'lucide-react'
+import { Search, ArrowLeft, ArrowRight, ChevronRight, ChevronLeft, Send, RefreshCw, Music, Brain } from 'lucide-react'
 import { emotions as emotionsData } from '../utils/emotions'
 import axios from "axios";
 
@@ -95,6 +95,7 @@ export default function Flow() {
   const MIN_CHAT_CHARS = 5; // Minimum characters for chat messages
   const [insights, setInsights] = useState<string | null>(null);
   const [memeURL, setMemeURL] = useState<string | null>(null);
+  const [playlistURL, setPlaylistURL] = useState<string | null>(null);
   const [loadingInsights, setLoadingInsights] = useState(false);
   const [showBackWarning, setShowBackWarning] = useState(false)
   const [pendingBackAction, setPendingBackAction] = useState(false)
@@ -206,6 +207,7 @@ export default function Flow() {
         setLoadingInsights(false);
         setInsights(res.data.checkIn.insights_actions);
         setMemeURL(res.data.meme);
+        setPlaylistURL(res.data.checkIn.playlist);
       } catch (error) {
         console.error('Error during checkin:', error);
         setLoadingInsights(false);
@@ -878,7 +880,19 @@ export default function Flow() {
                   ) : insights ? (
                     <div className="prose prose-purple max-w-none">
                       <div className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap">
+                        <div className="flex gap-2">
+                          <Brain className="h-8 w-8 text-purple-600" />
+                          <div className="text-purple-600 text-2xl">Feedback</div>  
+                        </div>
                         {insights}
+                        <br /><br />
+                        <a href={playlistURL || undefined} className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap">
+                          <div className="flex gap-2">
+                            <Music className="h-8 w-8 text-purple-600" />
+                            <div className="text-purple-600 text-2xl">Suggested playlist</div>  
+                          </div>
+                          {playlistURL}
+                        </a>
                       </div>
                     </div>
                   ) : (

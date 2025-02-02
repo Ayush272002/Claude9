@@ -15,7 +15,10 @@ const app = express();
 app.use(express.json());
 
 // Configure CORS
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:3000", // Specify your frontend origin
+  credentials: true, // Allow credentials (cookies, auth headers)
+}));
 
 app.get("/", (_req: Request, res: Response) => {
   res.send("Server has been online for " + (Date.now() - startTime) + "ms");

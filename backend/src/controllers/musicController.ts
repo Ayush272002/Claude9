@@ -92,4 +92,10 @@ router.post("/generate", async (req: Request, res: Response) => {
   }
 });
 
+export async function searchPlaylistsTokenless(mood: string) {
+  const token = await getSpotifyToken();
+  const playlist = await searchPlaylists(mood, token);
+  return playlist;
+}
+
 export default router;
